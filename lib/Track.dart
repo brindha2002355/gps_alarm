@@ -21,7 +21,7 @@ import 'Homescreens/save_alarm_page.dart';
 import 'adhelper.dart';
 
 int id = 0;
-const int notificationId = 123;
+const int notificationId= 888;
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();

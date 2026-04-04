@@ -11,6 +11,7 @@ import 'package:untitiled/Homescreens/save_alarm_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Map screen page.dart';
 import '../about page.dart';
+import '../drawer.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -103,9 +104,14 @@ class _SettingsState extends State<Settings> {
             selectedRingtone = value;
             // Save selected ringtone
           });
-          _saveSettings(selectedRingtone!);
+          await _saveSettings(); // ✅ CORRECT
+
+          _playRingtone(value);
+
+          print("SAVED RINGTONE: $value");
+       //   _saveSettings(selectedRingtone!);
           // _saveSelectedRingtone(value);
-          _playRingtone(selectedRingtone!);
+    //      _playRingtone(selectedRingtone!);
           // await flutterLocalNotificationsPlugin
           //     .resolvePlatformSpecificImplementation<
           //     AndroidFlutterLocalNotificationsPlugin>()
@@ -170,16 +176,16 @@ class _SettingsState extends State<Settings> {
         'unitSystem', _isMetricSystem); // Save current preference
   }
 
-  Future<void> _saveSelectedRingtone(String ringtone) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString('selectedRingtone', ringtone);
-      print('Selected ringtone saved: $ringtone');
-    } catch (e) {
-      print('Error saving selected ringtone: $e');
-    }
-  }
+  // Future<void> _saveSelectedRingtone(String ringtone) async {
+  //   try {
+  //     final prefs = await SharedPreferences.getInstance();
+  //
+  //     await prefs.setString('selectedRingtone', ringtone);
+  //     print('Selected ringtone saved: $ringtone');
+  //   } catch (e) {
+  //     print('Error saving selected ringtone: $e');
+  //   }
+  // }
 
   Future<void> handleScreenChanged(int index) async {
     switch (index) {
@@ -321,19 +327,28 @@ class _SettingsState extends State<Settings> {
     }
   }
 
-  Future<void> _saveSettings(String ringtone) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedRingtone', ringtone);
-    await prefs.setStringList('selectedOptions', _selectedOptions.toList());
-    print(_selectedOptions);
-  }
 
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (selectedRingtone != null) {
+      await prefs.setString('selectedRingtone', selectedRingtone!);
+    }
+
+    await prefs.setStringList('selectedOptions', _selectedOptions.toList());
+
+    print("SAVED OPTIONS: $_selectedOptions");
+    print("SAVED RINGTONE: $selectedRingtone");
+  }
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       final selectedOptions = prefs.getStringList('selectedOptions') ??
-          <String>['alarms']; // Default to 'alarms' if no saved settings
+          <String>['alarms'];
       _selectedOptions = selectedOptions.toSet();
+
+      // Also reload ringtone here
+      selectedRingtone = prefs.getString('selectedRingtone') ?? "alarm6.mp3";
     });
   }
 
@@ -434,59 +449,10 @@ class _SettingsState extends State<Settings> {
     double width = MediaQuery.of(context).size.width;
     return Scaffold(
       key: _scaffoldKey,
-      drawer: NavigationDrawer(
-        onDestinationSelected: (int index) {
-          handleScreenChanged(
-              index); // Assuming you have a handleScreenChanged function
-        },
-        selectedIndex: screenIndex,
-        children: <Widget>[
-          SizedBox(
-            height: height / 23.625,
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.alarm_on_outlined), // Adjust size as needed
-            label: Text('Saved Alarms'),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.alarm),
-            label: Text('Set a Alarm'),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.settings_outlined),
-            label: Text('Settings'),
-          ),
-          Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
-            child: Text(
-              'Communicate', // Assuming this is the header
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.share_outlined),
-            label: Text('Share'),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.rate_review_outlined),
-            label: Text('Rate/Review'),
-          ),
-          Divider(),
-          Padding(
-            padding: EdgeInsets.fromLTRB(28, 16, 16, 10),
-            child: Text(
-              'App', // Assuming this is the header
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.error_outline_outlined),
-            label: Text('About'),
-            // Set selected based on screenIndex
-          ),
-        ],
+      drawer:  AppDrawer( selectedIndex: screenIndex,
+        onDestinationSelected: handleScreenChanged,
       ),
+
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: InkWell(
@@ -625,16 +591,24 @@ class _SettingsState extends State<Settings> {
                       return CheckboxListTile(
                         title: Text(option),
                         value: _selectedOptions.contains(_optionMap[option]),
-                        onChanged: (bool? value) {
+                        onChanged: (bool? value) async {
                           setState(() {
                             if (value!) {
                               _selectedOptions.add(_optionMap[option]!);
                             } else {
                               _selectedOptions.remove(_optionMap[option]);
                             }
-                            print(_selectedOptions);
-                            _saveSettings(selectedRingtone!);
+
+                            // ✅ CORRECT
+
+                          //  _playRingtone(value);
+
+                            print("SAVED RINGTONE: $value");
+                        //    _saveSettings(selectedRingtone!);
                           });
+                          print(_selectedOptions);
+
+                          await _saveSettings();
                         },
                       );
                     } else if (option == 'Alarms') {
@@ -644,17 +618,21 @@ class _SettingsState extends State<Settings> {
                             title: Text(option),
                             value:
                                 _selectedOptions.contains(_optionMap[option]),
-                            onChanged: (bool? value) {
+                            onChanged: (bool? value) async {
                               setState(() {
                                 if (value!) {
                                   _selectedOptions.add(_optionMap[option]!);
                                 } else {
                                   _selectedOptions.remove(_optionMap[option]);
                                 }
-                                print(_selectedOptions);
-                                _saveSettings(selectedRingtone!);
+                              //  print(_selectedOptions);
+                               // _saveSettings(selectedRingtone!);
                               });
+                              print(_selectedOptions);
+
+                              await _saveSettings();
                             },
+
                           ),
                           Visibility(
                             visible:

@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vibration/vibration.dart';
 
+import 'drawer.dart';
+
 class About extends StatefulWidget {
   const About({super.key});
 
@@ -123,65 +125,68 @@ class _AboutState extends State<About> {
     double height = MediaQuery.of(context).size.height;
     return Scaffold(
       key: _scaffoldKey,
-      drawer: NavigationDrawer(
-        onDestinationSelected: (int index) {
-          handleScreenChanged(
-              index); // Assuming you have a handleScreenChanged function
-        },
-        selectedIndex: screenIndex,
-        children: <Widget>[
-          SizedBox(
-            height: 32,
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.alarm_on_outlined), // Adjust size as needed
-            label: Text('Saved Alarms'),
-            // Set selected based on screenIndex
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.alarm),
-            label: Text('Set a Alarm'),
-            // Set selected based on screenIndex
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.settings_outlined),
-            label: Text('Settings'),
-            // Set selected based on screenIndex
-          ),
-          Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
-            child: Text(
-              'Communicate', // Assuming this is the header
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.share_outlined),
-            label: Text('Share'),
-
-            // Set selected based on screenIndex
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.rate_review_outlined),
-            label: Text('Rate/Review'),
-            // Set selected based on screenIndex
-          ),
-          Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
-            child: Text(
-              'App', // Assuming this is the header
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.error_outline_outlined),
-            label: Text('About'),
-            // Set selected based on screenIndex
-          ),
-        ],
+      drawer: AppDrawer( selectedIndex: screenIndex,
+        onDestinationSelected: handleScreenChanged,
       ),
+      // NavigationDrawer(
+      //   onDestinationSelected: (int index) {
+      //     handleScreenChanged(
+      //         index); // Assuming you have a handleScreenChanged function
+      //   },
+      //   selectedIndex: screenIndex,
+      //   children: <Widget>[
+      //     SizedBox(
+      //       height: 32,
+      //     ),
+      //     NavigationDrawerDestination(
+      //       icon: Icon(Icons.alarm_on_outlined), // Adjust size as needed
+      //       label: Text('Saved Alarms'),
+      //       // Set selected based on screenIndex
+      //     ),
+      //     NavigationDrawerDestination(
+      //       icon: Icon(Icons.alarm),
+      //       label: Text('Set a Alarm'),
+      //       // Set selected based on screenIndex
+      //     ),
+      //     NavigationDrawerDestination(
+      //       icon: Icon(Icons.settings_outlined),
+      //       label: Text('Settings'),
+      //       // Set selected based on screenIndex
+      //     ),
+      //     Divider(),
+      //     Padding(
+      //       padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
+      //       child: Text(
+      //         'Communicate', // Assuming this is the header
+      //         style: Theme.of(context).textTheme.titleSmall,
+      //       ),
+      //     ),
+      //     NavigationDrawerDestination(
+      //       icon: Icon(Icons.share_outlined),
+      //       label: Text('Share'),
+      //
+      //       // Set selected based on screenIndex
+      //     ),
+      //     NavigationDrawerDestination(
+      //       icon: Icon(Icons.rate_review_outlined),
+      //       label: Text('Rate/Review'),
+      //       // Set selected based on screenIndex
+      //     ),
+      //     Divider(),
+      //     Padding(
+      //       padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
+      //       child: Text(
+      //         'App', // Assuming this is the header
+      //         style: Theme.of(context).textTheme.titleSmall,
+      //       ),
+      //     ),
+      //     NavigationDrawerDestination(
+      //       icon: Icon(Icons.error_outline_outlined),
+      //       label: Text('About'),
+      //       // Set selected based on screenIndex
+      //     ),
+      //   ],
+      // ),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: InkWell(

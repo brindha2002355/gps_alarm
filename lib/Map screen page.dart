@@ -944,13 +944,15 @@
 //     );
 //   }
 // }
-
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:connectivity/connectivity.dart';
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';        // ADD THIS
+import 'package:google_places_flutter/model/prediction.dart';              // ADD THIS
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:convert';
@@ -963,8 +965,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
-import 'package:google_places_flutter/model/prediction.dart';
 import 'package:location/location.dart' as location;
 import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -975,6 +975,7 @@ import 'Apiutils.dart';
 import 'Homescreens/save_alarm_page.dart';
 import 'about page.dart';
 import 'adhelper.dart';
+import 'drawer.dart';
 import 'main.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -1100,7 +1101,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> initConnectivity() async {
-    ConnectivityResult result = await _connectivity.checkConnectivity();
+    List<ConnectivityResult> result = await _connectivity.checkConnectivity();
     if (!mounted) {
       return;
     }
@@ -1216,9 +1217,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _toggleMapType() {
     setState(() {
-      _currentMapType = (_currentMapType == MapType.normal)
-          ? MapType.satellite
-          : MapType.normal;
+      if (_currentMapType == MapType.normal) {
+        _currentMapType = MapType.hybrid;      // satellite + clear road labels
+      } else if (_currentMapType == MapType.hybrid) {
+        _currentMapType = MapType.terrain;     // terrain/topographic
+      } else {
+        _currentMapType = MapType.normal;      // back to normal
+      }
     });
   }
 
@@ -1408,322 +1413,512 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  // Widget build(BuildContext context) {
+  //   double height = MediaQuery.of(context).size.height;
+  //   double width = MediaQuery.of(context).size.width;
+  //   final Uri toLaunch = Uri(scheme: 'https', host: 'www.google.com');
+  //   return Scaffold(
+  //     key: _scaffoldKey,
+  //     drawer: NavigationDrawer(
+  //       onDestinationSelected: (int index) {
+  //         handleScreenChanged(
+  //             index); // Assuming you have a handleScreenChanged function
+  //       },
+  //       selectedIndex: screenIndex,
+  //       children: <Widget>[
+  //         SizedBox(
+  //           height: height / 23.625,
+  //         ),
+  //         NavigationDrawerDestination(
+  //           icon: Icon(Icons.alarm_on_outlined), // Adjust size as needed
+  //           label: Text('Saved Alarms'),
+  //           // Set selected based on screenIndex
+  //         ),
+  //         NavigationDrawerDestination(
+  //           icon: Icon(Icons.alarm),
+  //           label: Text('Set a Alarm'),
+  //           // Set selected based on screenIndex
+  //         ),
+  //         NavigationDrawerDestination(
+  //           icon: Icon(Icons.settings_outlined),
+  //           label: Text('Settings'),
+  //           // Set selected based on screenIndex
+  //         ),
+  //         Divider(),
+  //         Padding(
+  //           padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
+  //           child: Text(
+  //             'Communicate', // Assuming this is the header
+  //             style: Theme.of(context).textTheme.titleSmall,
+  //           ),
+  //         ),
+  //         NavigationDrawerDestination(
+  //           icon: Icon(Icons.share_outlined),
+  //           label: Text('Share'),
+  //
+  //           // Set selected based on screenIndex
+  //         ),
+  //         NavigationDrawerDestination(
+  //           icon: Icon(Icons.rate_review_outlined),
+  //           label: Text('Rate/Review'),
+  //           // Set selected based on screenIndex
+  //         ),
+  //         Divider(),
+  //         Padding(
+  //           padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
+  //           child: Text(
+  //             'App', // Assuming this is the header
+  //             style: Theme.of(context).textTheme.titleSmall,
+  //           ),
+  //         ),
+  //         NavigationDrawerDestination(
+  //           icon: Icon(Icons.error_outline_outlined),
+  //           label: Text('About'),
+  //           // Set selected based on screenIndex
+  //         ),
+  //       ],
+  //     ),
+  //     body: StreamBuilder<List<ConnectivityResult>>(
+  //       stream: _connectivity.onConnectivityChanged,
+  //       builder: (context, snapshot) {
+  //         if (snapshot.hasError) {
+  //           return Text('Error: ${snapshot.error}');
+  //         }
+  //
+  //         if (!snapshot.hasData) {
+  //           print("Internet connection");
+  //           return Center(
+  //               child:
+  //                   CircularProgressIndicator()); // Or a custom loading indicator
+  //         }
+  //
+  //         List<ConnectivityResult>? result = snapshot.data;
+  //
+  //         bool isOffline = result != null && result.contains(ConnectivityResult.none);
+  //
+  //
+  //
+  //         // Display message or disable functionality based on connectivity
+  //         if (isOffline) {
+  //           return Center(
+  //             child: Text(
+  //               'No Internet connection',
+  //               style: Theme.of(context).textTheme.titleMedium,
+  //             ),
+  //           );
+  //         }else {
+  //           print("Internet connection");
+  //           // Rest of your GPS alarm app functionality that requires internet
+  //           return Stack(
+  //             children: [
+  //               Center(
+  //                 child: AnimatedBuilder(
+  //                   animation: AlwaysStoppedAnimation(0.0),
+  //                   builder: (context, child) {
+  //                     return Transform.rotate(
+  //                       angle: 3.14 * 2 * 0.5,
+  //                       // child: Icon(Icons.refresh), // Use any loading icon you prefer
+  //                     );
+  //                   },
+  //                 ),
+  //                 // CircularProgressIndicator(), // Adjust style as needed
+  //               ),
+  //               // GoogleMap(
+  //               //   mapType: MapType.normal,
+  //               //   myLocationButtonEnabled: false,
+  //               //   zoomControlsEnabled: false,
+  //               //   initialCameraPosition: CameraPosition(
+  //               //     zoom: 15,
+  //               //     target: _defaultLocation,
+  //               //   ),
+  //               //   onMapCreated: (GoogleMapController controller) {
+  //               //     mapController = controller;
+  //               //     setState(() {
+  //               //       _isLoading = false; // Hide loading animation when the map is created
+  //               //     });
+  //               //   },
+  //               //   markers: _markers.toSet(),
+  //               //   onLongPress: _handleTap,
+  //               //   onCameraMoveStarted: () {
+  //               //     setState(() {
+  //               //       _isCameraMoving = true;
+  //               //     });
+  //               //   },
+  //               //   onCameraIdle: () {
+  //               //     setState(() {
+  //               //       _isCameraMoving = false;
+  //               //     });
+  //               //   },
+  //               // ),
+  //               // if (_isLoading)
+  //               //   Center(
+  //               //     child: CircularProgressIndicator(), // Adjust style as needed
+  //               //   ),
+  //               // Positioned(
+  //               //     top: 200,
+  //               //     left: 70,
+  //               //     right: 20,
+  //               //     child: Image.asset("assets/locationmark11.png")),
+  //               GoogleMap(
+  //                 mapType: _currentMapType,
+  //                 myLocationButtonEnabled: false,
+  //                 zoomControlsEnabled: false,
+  //                 initialCameraPosition: CameraPosition(
+  //                   zoom: 15,
+  //                   target: _defaultLocation,
+  //                 ),
+  //                 onMapCreated: (GoogleMapController controller) {
+  //                   mapController = controller;
+  //                 },
+  //                 markers: _markers.toSet(),
+  //                 onLongPress: _handleTap,
+  //                 onCameraMoveStarted: () {
+  //                   setState(() {
+  //                     _isCameraMoving = true;
+  //                   });
+  //                 },
+  //                 onCameraIdle: () {
+  //                   setState(() {
+  //                     _isCameraMoving = false;
+  //                   });
+  //                 },
+  //               ),
+  //               if (_isLoading)
+  //                 Stack(
+  //                   children: [
+  //                     BackdropFilter(
+  //                       filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+  //                       child: Container(
+  //                         color: Colors.black
+  //                             .withOpacity(0.5), // Semi-transparent background
+  //                       ),
+  //                     ),
+  //                     Center(
+  //                       child: Container(
+  //                         width: 100,
+  //                         height: 100,
+  //                         decoration: BoxDecoration(
+  //                           color: Colors.white,
+  //                           // Background color of the loader container
+  //                           borderRadius: BorderRadius.circular(10),
+  //                         ),
+  //                         child: Center(
+  //                           child:
+  //                               CircularProgressIndicator(), // Adjust style as needed
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //
+  //               Visibility(
+  //                 visible: _isLoading,
+  //                 child: Center(
+  //                   child:
+  //                       CircularProgressIndicator(), // Adjust style as needed
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                 top: 50,
+  //                 left: 70,
+  //                 right: 20,
+  //                 child: placesAutoCompleteTextField(),
+  //               ),
+  //               Padding(
+  //                 padding:
+  //                     EdgeInsets.only(top: height / 6.56, left: width / 3.6),
+  //                 child: Container(
+  //                   height: height / 25.2,
+  //                   width: width / 1.8,
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.white70,
+  //                     border: Border.all(
+  //                       color: Colors.black,
+  //                     ),
+  //                     borderRadius: BorderRadius.circular(10),
+  //                   ),
+  //                   child: Center(
+  //                       child: AutoSizeText(
+  //                         maxFontSize: 14,
+  //                     minFontSize: 2,
+  //
+  //                     "or long press on the map",
+  //                     style: Theme.of(context).textTheme.titleMedium,
+  //                   )),
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                 right: 24, bottom: 162,
+  //                 // padding:  EdgeInsets.only(top:height/1.68,left: 280),
+  //                 child: IconButton.filledTonal(
+  //                   onPressed: _goToCurrentLocation,
+  //                   icon: Icon(Icons.my_location),
+  //                   // child: Icon(Icons.my_location),
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                 bottom: 112, right: 24,
+  //                 // padding: const EdgeInsets.only(left: 280.0,top: 500),
+  //                 child: IconButton.filledTonal(
+  //                   onPressed: () {
+  //                     mapController?.animateCamera(
+  //                       CameraUpdate.zoomIn(),
+  //                     );
+  //                   },
+  //                   icon: Icon(Icons.add),
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                 bottom: 62, right: 24,
+  //
+  //                 // padding: const EdgeInsets.only(left: 280.0,top: 600),
+  //                 child: IconButton.filledTonal(
+  //                   onPressed: () {
+  //                     mapController?.animateCamera(
+  //                       CameraUpdate.zoomOut(),
+  //                     );
+  //                   },
+  //                   icon: Icon(Icons.remove),
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                   top: 50,
+  //                   left: 15,
+  //                   child: IconButton(
+  //                     onPressed: () {
+  //                       _scaffoldKey.currentState?.openDrawer();
+  //                     },
+  //                     icon: Icon(Icons.menu),
+  //                   )),
+  //               Positioned(
+  //                 right: 24,
+  //                 bottom: 212,
+  //                 child: IconButton.filledTonal(
+  //                   onPressed: _toggleMapType,
+  //                   icon: Icon(Icons.map),
+  //                 ),
+  //               ),
+  //               Stack(
+  //                 children: [
+  //                   _bannerAd != null
+  //                       ? Align(
+  //                           alignment: Alignment.bottomCenter,
+  //                           child: Container(
+  //                             width: _bannerAd!.size.width.toDouble(),
+  //                             height: _bannerAd!.size.height.toDouble(),
+  //                             child: AdWidget(ad: _bannerAd!),
+  //                           ),
+  //                         )
+  //                       : Align(
+  //                           alignment: Alignment.bottomCenter,
+  //                           child: Container(
+  //                             height: 50,
+  //                             color: Colors.transparent,
+  //                           ),
+  //                         )
+  //                 ],
+  //               )
+  //             ],
+  //           );
+  //         }
+  //       },
+  //     ),
+  //
+  //     // bottomNavigationBar: _bannerAd != null
+  //     //     ? Align(
+  //     //   alignment: Alignment.bottomCenter,
+  //     //   child: Container(
+  //     //     width: _bannerAd!.size.width.toDouble(),
+  //     //     height: _bannerAd!.size.height.toDouble(),
+  //     //     child: AdWidget(ad: _bannerAd!),
+  //     //   ),
+  //     // )
+  //     //     : Text('Loading ad...'),
+  //   );
+  // }
+  @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    final Uri toLaunch = Uri(scheme: 'https', host: 'www.google.com');
+    bool isTablet = ResponsiveHelper.isTablet(context);
+
+    double topOffset = isTablet ? 60 : 50;
+    double menuLeft = isTablet ? 20 : 15;
+    double searchLeft = isTablet ? 90 : 70;
+    double iconRight = isTablet ? 30 : 24;
+    double btn1Bottom = isTablet ? 200 : 162;
+    double btn2Bottom = isTablet ? 150 : 112;
+    double btn3Bottom = isTablet ? 100 : 62;
+    double btn4Bottom = isTablet ? 250 : 212;
+
     return Scaffold(
       key: _scaffoldKey,
-      drawer: NavigationDrawer(
-        onDestinationSelected: (int index) {
-          handleScreenChanged(
-              index); // Assuming you have a handleScreenChanged function
-        },
-        selectedIndex: screenIndex,
-        children: <Widget>[
-          SizedBox(
-            height: height / 23.625,
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.alarm_on_outlined), // Adjust size as needed
-            label: Text('Saved Alarms'),
-            // Set selected based on screenIndex
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.alarm),
-            label: Text('Set a Alarm'),
-            // Set selected based on screenIndex
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.settings_outlined),
-            label: Text('Settings'),
-            // Set selected based on screenIndex
-          ),
-          Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
-            child: Text(
-              'Communicate', // Assuming this is the header
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.share_outlined),
-            label: Text('Share'),
-
-            // Set selected based on screenIndex
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.rate_review_outlined),
-            label: Text('Rate/Review'),
-            // Set selected based on screenIndex
-          ),
-          Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
-            child: Text(
-              'App', // Assuming this is the header
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.error_outline_outlined),
-            label: Text('About'),
-            // Set selected based on screenIndex
-          ),
-        ],
+      drawer: AppDrawer( selectedIndex: screenIndex,
+        onDestinationSelected: handleScreenChanged,
       ),
-      body: StreamBuilder<ConnectivityResult>(
+      body: StreamBuilder<List<ConnectivityResult>>(
         stream: _connectivity.onConnectivityChanged,
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
-          }
+          if (snapshot.hasError) return Text('Error: ${snapshot.error}');
 
           if (!snapshot.hasData) {
-            print("Internet connection");
-            return Center(
-                child:
-                    CircularProgressIndicator()); // Or a custom loading indicator
+            return Center(child: CircularProgressIndicator());
           }
 
-          ConnectivityResult? currentStatus = snapshot.data;
+          List<ConnectivityResult>? result = snapshot.data;
+          bool isOffline =
+              result != null && result.contains(ConnectivityResult.none);
 
-          // Display message or disable functionality based on connectivity
-          if (currentStatus == ConnectivityResult.none) {
+          if (isOffline) {
             return Center(
-                child: Text(
-              'No Internet connection',
-              style: Theme.of(context).textTheme.titleMedium,
-            ));
-          } else {
-            print("Internet connection");
-            // Rest of your GPS alarm app functionality that requires internet
-            return Stack(
-              children: [
-                Center(
-                  child: AnimatedBuilder(
-                    animation: AlwaysStoppedAnimation(0.0),
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: 3.14 * 2 * 0.5,
-                        // child: Icon(Icons.refresh), // Use any loading icon you prefer
-                      );
-                    },
-                  ),
-                  // CircularProgressIndicator(), // Adjust style as needed
-                ),
-                // GoogleMap(
-                //   mapType: MapType.normal,
-                //   myLocationButtonEnabled: false,
-                //   zoomControlsEnabled: false,
-                //   initialCameraPosition: CameraPosition(
-                //     zoom: 15,
-                //     target: _defaultLocation,
-                //   ),
-                //   onMapCreated: (GoogleMapController controller) {
-                //     mapController = controller;
-                //     setState(() {
-                //       _isLoading = false; // Hide loading animation when the map is created
-                //     });
-                //   },
-                //   markers: _markers.toSet(),
-                //   onLongPress: _handleTap,
-                //   onCameraMoveStarted: () {
-                //     setState(() {
-                //       _isCameraMoving = true;
-                //     });
-                //   },
-                //   onCameraIdle: () {
-                //     setState(() {
-                //       _isCameraMoving = false;
-                //     });
-                //   },
-                // ),
-                // if (_isLoading)
-                //   Center(
-                //     child: CircularProgressIndicator(), // Adjust style as needed
-                //   ),
-                // Positioned(
-                //     top: 200,
-                //     left: 70,
-                //     right: 20,
-                //     child: Image.asset("assets/locationmark11.png")),
-                GoogleMap(
-                  mapType: _currentMapType,
-                  myLocationButtonEnabled: false,
-                  zoomControlsEnabled: false,
-                  initialCameraPosition: CameraPosition(
-                    zoom: 15,
-                    target: _defaultLocation,
-                  ),
-                  onMapCreated: (GoogleMapController controller) {
-                    mapController = controller;
-                  },
-                  markers: _markers.toSet(),
-                  onLongPress: _handleTap,
-                  onCameraMoveStarted: () {
-                    setState(() {
-                      _isCameraMoving = true;
-                    });
-                  },
-                  onCameraIdle: () {
-                    setState(() {
-                      _isCameraMoving = false;
-                    });
-                  },
-                ),
-                if (_isLoading)
-                  Stack(
-                    children: [
-                      BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                        child: Container(
-                          color: Colors.black
-                              .withOpacity(0.5), // Semi-transparent background
-                        ),
-                      ),
-                      Center(
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            // Background color of the loader container
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Center(
-                            child:
-                                CircularProgressIndicator(), // Adjust style as needed
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                Visibility(
-                  visible: _isLoading,
-                  child: Center(
-                    child:
-                        CircularProgressIndicator(), // Adjust style as needed
-                  ),
-                ),
-                Positioned(
-                  top: 50,
-                  left: 70,
-                  right: 20,
-                  child: placesAutoCompleteTextField(),
-                ),
-                Padding(
-                  padding:
-                      EdgeInsets.only(top: height / 7.56, left: width / 3.6),
-                  child: Container(
-                    height: height / 25.2,
-                    width: width / 1.8,
-                    decoration: BoxDecoration(
-                      color: Colors.white70,
-                      border: Border.all(
-                        color: Colors.black,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                        child: Text(
-                      "or long press on the map",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    )),
-                  ),
-                ),
-                Positioned(
-                  right: 24, bottom: 162,
-                  // padding:  EdgeInsets.only(top:height/1.68,left: 280),
-                  child: IconButton.filledTonal(
-                    onPressed: _goToCurrentLocation,
-                    icon: Icon(Icons.my_location),
-                    // child: Icon(Icons.my_location),
-                  ),
-                ),
-                Positioned(
-                  bottom: 112, right: 24,
-                  // padding: const EdgeInsets.only(left: 280.0,top: 500),
-                  child: IconButton.filledTonal(
-                    onPressed: () {
-                      mapController?.animateCamera(
-                        CameraUpdate.zoomIn(),
-                      );
-                    },
-                    icon: Icon(Icons.add),
-                  ),
-                ),
-                Positioned(
-                  bottom: 62, right: 24,
-
-                  // padding: const EdgeInsets.only(left: 280.0,top: 600),
-                  child: IconButton.filledTonal(
-                    onPressed: () {
-                      mapController?.animateCamera(
-                        CameraUpdate.zoomOut(),
-                      );
-                    },
-                    icon: Icon(Icons.remove),
-                  ),
-                ),
-                Positioned(
-                    top: 50,
-                    left: 15,
-                    child: IconButton(
-                      onPressed: () {
-                        _scaffoldKey.currentState?.openDrawer();
-                      },
-                      icon: Icon(Icons.menu),
-                    )),
-                Positioned(
-                  right: 24,
-                  bottom: 212,
-                  child: IconButton.filledTonal(
-                    onPressed: _toggleMapType,
-                    icon: Icon(Icons.map),
-                  ),
-                ),
-                Stack(
-                  children: [
-                    _bannerAd != null
-                        ? Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              width: _bannerAd!.size.width.toDouble(),
-                              height: _bannerAd!.size.height.toDouble(),
-                              child: AdWidget(ad: _bannerAd!),
-                            ),
-                          )
-                        : Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              height: 50,
-                              color: Colors.transparent,
-                            ),
-                          )
-                  ],
-                )
-              ],
+              child: Text('No Internet connection',
+                  style: Theme.of(context).textTheme.titleMedium),
             );
           }
+
+          return Stack(
+            children: [
+              // Map
+              GoogleMap(
+                mapType: _currentMapType,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                initialCameraPosition: CameraPosition(
+                  zoom: 15,
+                  target: _defaultLocation,
+                ),
+                onMapCreated: (GoogleMapController controller) {
+                  mapController = controller;
+                },
+                markers: _markers.toSet(),
+                onLongPress: _handleTap,
+                onCameraMoveStarted: () =>
+                    setState(() => _isCameraMoving = true),
+                onCameraIdle: () => setState(() => _isCameraMoving = false),
+              ),
+
+              // Loading overlay
+              if (_isLoading)
+                Stack(children: [
+                  BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                    child: Container(color: Colors.black.withOpacity(0.5)),
+                  ),
+                  Center(
+                    child: Container(
+                      width: isTablet ? 140 : 100,
+                      height: isTablet ? 140 : 100,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+                ]),
+
+              // Search bar
+              Positioned(
+                top: topOffset,
+                left: searchLeft,
+                right: isTablet ? 30 : 20,
+                child: placesAutoCompleteTextField(),
+              ),
+
+              // "or long press" hint
+              Positioned(
+                top: topOffset + (isTablet ? 70 : 55),
+                left: width * 0.35,
+                right: isTablet ? 30 : 20,
+                child: Container(
+                  height: isTablet ? 36 : height / 25.2,
+                  decoration: BoxDecoration(
+                    color: Colors.white70,
+                    border: Border.all(color: Colors.black),
+                    borderRadius: BorderRadius.circular(10),
+
+                  ),
+                  child: Center(
+                    child: AutoSizeText(
+                      "or long press on the map",
+                      maxFontSize: isTablet ? 12 : 10,
+                      minFontSize: 8,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Menu button
+              Positioned(
+                top: topOffset,
+                left: menuLeft,
+                child: IconButton(
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                  icon: Icon(Icons.menu, size: isTablet ? 30 : 24),
+                ),
+              ),
+
+              // My location button
+              Positioned(
+                right: iconRight,
+                bottom: btn1Bottom,
+                child: IconButton.filledTonal(
+                  onPressed: _goToCurrentLocation,
+                  icon: Icon(Icons.my_location, size: isTablet ? 28 : 24),
+                ),
+              ),
+
+              // Zoom in
+              Positioned(
+                bottom: btn2Bottom,
+                right: iconRight,
+                child: IconButton.filledTonal(
+                  onPressed: () =>
+                      mapController?.animateCamera(CameraUpdate.zoomIn()),
+                  icon: Icon(Icons.add, size: isTablet ? 28 : 24),
+                ),
+              ),
+
+              // Zoom out
+              Positioned(
+                bottom: btn3Bottom,
+                right: iconRight,
+                child: IconButton.filledTonal(
+                  onPressed: () =>
+                      mapController?.animateCamera(CameraUpdate.zoomOut()),
+                  icon: Icon(Icons.remove, size: isTablet ? 28 : 24),
+                ),
+              ),
+
+              // Map type toggle
+              Positioned(
+                right: iconRight,
+                bottom: btn4Bottom,
+                child: IconButton.filledTonal(
+                  onPressed: _toggleMapType,
+                  icon: Icon(Icons.map, size: isTablet ? 28 : 24),
+                ),
+              ),
+
+              // Banner ad
+              if (_bannerAd != null)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: _bannerAd!.size.width.toDouble(),
+                    height: _bannerAd!.size.height.toDouble(),
+                    child: AdWidget(ad: _bannerAd!),
+                  ),
+                ),
+            ],
+          );
         },
       ),
-
-      // bottomNavigationBar: _bannerAd != null
-      //     ? Align(
-      //   alignment: Alignment.bottomCenter,
-      //   child: Container(
-      //     width: _bannerAd!.size.width.toDouble(),
-      //     height: _bannerAd!.size.height.toDouble(),
-      //     child: AdWidget(ad: _bannerAd!),
-      //   ),
-      // )
-      //     : Text('Loading ad...'),
     );
   }
-
-  void _showCustomBottomSheet(BuildContext context) async {
+  void _showCustomBottomSheet(BuildContext context) async
+  {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     int characterCount = 0;
@@ -1751,276 +1946,417 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       alarms = [];
     }
+    // showModalBottomSheet(
+    //   context: context,
+    //   isScrollControlled: true,
+    //   builder: (BuildContext context) {
+    //     String counterText;
+    //     return SingleChildScrollView(
+    //       child: Padding(
+    //         padding: EdgeInsets.only(
+    //           bottom: MediaQuery.of(context).viewInsets.bottom,
+    //         ),
+    //         child: Container(
+    //          // height: height / 1.9384615384615,
+    //           width: double.infinity,
+    //           child: Column(
+    //               mainAxisSize: MainAxisSize.min, // 🔥 VERY IMPORTANT
+    //               crossAxisAlignment: CrossAxisAlignment.start,
+    //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    //
+    //               children: [
+    //                 Row(
+    //                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    //                   children: [
+    //                     FilledButton(
+    //                       onPressed: () {
+    //                         Navigator.of(context)
+    //                             .pop(); // Call the saveAlarm function
+    //                       },
+    //                       child: Text("Cancel"),
+    //                     ),
+    //                     Padding(
+    //                       padding: EdgeInsets.only(left: width / 3),
+    //                       child: FilledButton(
+    //                         onPressed: () {
+    //                           saveAlarm(context);
+    //                         },
+    //                         // Call the saveAlarm function
+    //
+    //                         child: Text("Set"),
+    //                       ),
+    //                     ),
+    //                   ],
+    //                 ),
+    //
+    //                 // Integrate the MeterCalculatorWidget
+    //                 MeterCalculatorWidget(
+    //                   callback: updateradiusvalue,
+    //                 ),
+    //                 // Column(
+    //                 //   crossAxisAlignment: CrossAxisAlignment.start,
+    //                 //   children: [
+    //                 //     Text("Alarm Name:", style: Theme.of(context).textTheme.titleMedium,),
+    //                 //
+    //                 //     // Container(
+    //                 //     //   height:height/ 15.12,
+    //                 //     //   width: width/1.2,
+    //                 //     //   decoration: BoxDecoration(
+    //                 //     //     color: Colors.white,
+    //                 //     //     borderRadius: BorderRadius.circular(10),
+    //                 //     //     border: Border.all(color: Colors.black12),
+    //                 //     //
+    //                 //     //   ),child: Padding(
+    //                 //     //   padding:  EdgeInsets.only(left: width/36),
+    //                 //     //   child: TextField(
+    //                 //     //     controller: alramnamecontroller,
+    //                 //     //
+    //                 //     //     style: Theme.of(context).textTheme.bodyMedium,
+    //                 //     //     decoration: InputDecoration(
+    //                 //     //       hintText: "Alarm name",
+    //                 //     //       border: InputBorder.none,
+    //                 //     //       enabledBorder: InputBorder.none,
+    //                 //     //     ),
+    //                 //     //   ),
+    //                 //     // ),
+    //                 //     // ),
+    //                 //     // Container(
+    //                 //     //   height: height / 15.12,
+    //                 //     //   width: width / 1.2,
+    //                 //     //   decoration: BoxDecoration(
+    //                 //     //     color: Colors.white,
+    //                 //     //     borderRadius: BorderRadius.circular(10),
+    //                 //     //     border: Border.all(color: Colors.black12),
+    //                 //     //   ),
+    //                 //     //   child: Padding(
+    //                 //     //     padding: EdgeInsets.only(left: width / 36),
+    //                 //     //     child: TextFormField( // Use TextFormField instead of TextField
+    //                 //     //       controller: alramnamecontroller,
+    //                 //     //       style: Theme.of(context).textTheme.bodyMedium,
+    //                 //     //       decoration: InputDecoration(
+    //                 //     //         hintText: "Alarm name",
+    //                 //     //         border: InputBorder.none,
+    //                 //     //         enabledBorder: InputBorder.none,
+    //                 //     //         counterText: '', // Hide default character counter
+    //                 //     //       ),
+    //                 //     //       maxLength: 100, // Set character limit
+    //                 //     //       validator: (value) {
+    //                 //     //         if (value == null || value.isEmpty) {
+    //                 //     //           return 'Alarm name is required.';
+    //                 //     //         }
+    //                 //     //         if (value.length > 100) {
+    //                 //     //           return 'Alarm name cannot exceed 100 characters.';
+    //                 //     //         }
+    //                 //     //         return null; // Valid input
+    //                 //     //       },
+    //                 //     //       onChanged: (value) {
+    //                 //     //         // Optional: Update counter text manually (if desired)
+    //                 //     //         // setState(() {
+    //                 //     //          // counterText = value.length.toString();
+    //                 //     //         // });
+    //                 //     //       },
+    //                 //     //     ),
+    //                 //     //   ),
+    //                 //     // ),
+    //                 //     Container(
+    //                 //       height: height / 15.12,
+    //                 //       width: width / 1.2,
+    //                 //       decoration: BoxDecoration(
+    //                 //         color: Colors.white,
+    //                 //         borderRadius: BorderRadius.circular(10),
+    //                 //         border: Border.all(color: Colors.black12),
+    //                 //       ),
+    //                 //       child: Row(
+    //                 //         children: [
+    //                 //           Expanded(
+    //                 //             child: Padding(
+    //                 //               padding: EdgeInsets.only(left: width / 36),
+    //                 //               child: TextFormField(
+    //                 //                 controller: alramnamecontroller,
+    //                 //                 style: Theme.of(context).textTheme.bodyMedium,
+    //                 //                 decoration: InputDecoration(
+    //                 //                   hintText: "Alarm name",
+    //                 //                   border: InputBorder.none,
+    //                 //                   enabledBorder: InputBorder.none,
+    //                 //                   counterText: '', // Hide default character counter
+    //                 //                 ),
+    //                 //                 maxLength: 100, // Set character limit
+    //                 //                 validator: (value) {
+    //                 //                   // Check if the input is only whitespace characters or empty
+    //                 //                   if (value!.trim().isEmpty) {
+    //                 //                     return 'Alarm name is required.';
+    //                 //                   }
+    //                 //                   if (value.split(' ').length > 50) {
+    //                 //                     return 'Alarm name cannot exceed 50 words.';
+    //                 //                   }
+    //                 //                   if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
+    //                 //                     return 'Alarm name cannot contain special characters.';
+    //                 //                   }
+    //                 //                   return null; // Valid input
+    //                 //                 },
+    //                 //                 onChanged: (value) {
+    //                 //                   // Optional: Update counter text manually (if desired)
+    //                 //                   // setState(() {
+    //                 //                   //   counterText = value.length.toString();
+    //                 //                   // });
+    //                 //                 },
+    //                 //               ),
+    //                 //             ),
+    //                 //           ),
+    //                 //
+    //                 //         ],
+    //                 //       ),
+    //                 //     ),
+    //                 //
+    //                 //     Text("Notes:",style: Theme.of(context).textTheme.titleMedium,),
+    //                 //     Container(
+    //                 //       height: height/10.8,
+    //                 //       width:width/1.2,
+    //                 //       decoration: BoxDecoration(
+    //                 //         color: Colors.white,
+    //                 //         borderRadius: BorderRadius.circular(10),
+    //                 //         border: Border.all(color: Colors.black12),
+    //                 //       ),child: Padding(
+    //                 //       padding:  EdgeInsets.only(left: width/36),
+    //                 //       child: TextField(
+    //                 //         controller: notescontroller,
+    //                 //         style: Theme.of(context).textTheme.bodyMedium,
+    //                 //         decoration: InputDecoration(
+    //                 //           hintText: "Notes",
+    //                 //           border: InputBorder.none,
+    //                 //           enabledBorder: InputBorder.none,
+    //                 //         ),
+    //                 //       ),
+    //                 //     ),
+    //                 //     ),
+    //                 //   ],
+    //                 // ),
+    //                 Padding(
+    //                   padding: EdgeInsets.only(left: width / 15),
+    //                   child: Column(
+    //                     crossAxisAlignment: CrossAxisAlignment.start,
+    //                     // Align text to the start horizontally
+    //                     children: [
+    //                       Text(
+    //                         "Alarm Name:",
+    //                         style: Theme.of(context).textTheme.titleMedium,
+    //                       ),
+    //                       Container(
+    //                         //height: 70,
+    //                         width: width / 1.1612903225806,
+    //                         decoration: BoxDecoration(
+    //                           color: Colors.white,
+    //                           borderRadius: BorderRadius.circular(10),
+    //                           border: Border.all(color: Colors.black12),
+    //                         ),
+    //                         child: Padding(
+    //                           padding: EdgeInsets.only(
+    //                               left: width / 22.5, right: width / 22.5),
+    //                           child: TextField(
+    //                             textAlign: TextAlign.start,
+    //                             // keyboardType: TextInputType.multiline,
+    //                             maxLines: 2,
+    //                             controller: alramnamecontroller,
+    //                             // Set the desired number of lines for multi-line input
+    //                             style: Theme.of(context).textTheme.bodyMedium,
+    //                             decoration: InputDecoration(
+    //                               hintText: "Alarmname",
+    //                               border: InputBorder.none,
+    //                               // Remove borders if desired (optional)
+    //                               enabledBorder: InputBorder
+    //                                   .none, // Remove borders if desired (optional)
+    //                               // Show current character count and limit
+    //                             ),
+    //                             maxLength: 50,
+    //                             onChanged: (value) => counterText =
+    //                                 '${alramnamecontroller.text.length}/50', // Set the maximum allowed characters
+    //                           ),
+    //                         ),
+    //                       ),
+    //                       //Text("Alarmname cannot exceed 50 words",style: Theme.of(context).textTheme.bodySmall,),
+    //                       SizedBox(
+    //                         height: 10,
+    //                       ),
+    //                       Text(
+    //                         "Notes:",
+    //                         style: Theme.of(context).textTheme.titleMedium,
+    //                       ),
+    //                       Container(
+    //                         //height: 70,
+    //                         width: width / 1.1612903225806,
+    //                         decoration: BoxDecoration(
+    //                           color: Colors.white,
+    //                           borderRadius: BorderRadius.circular(10),
+    //                           border: Border.all(color: Colors.black12),
+    //                         ),
+    //                         child: Padding(
+    //                           padding: EdgeInsets.only(
+    //                               left: width / 22.5, right: width / 22.5),
+    //                           child: TextField(
+    //                             textAlign: TextAlign.start,
+    //                             // keyboardType: TextInputType.multiline,
+    //                             maxLines: 2,
+    //                             controller: notescontroller,
+    //                             // Set the desired number of lines for multi-line input
+    //                             style: Theme.of(context).textTheme.bodyMedium,
+    //                             decoration: InputDecoration(
+    //                               hintText: "Notes",
+    //                               border: InputBorder.none,
+    //                               // Remove borders if desired (optional)
+    //                               enabledBorder: InputBorder
+    //                                   .none, // Remove borders if desired (optional)
+    //                               // Show current character count and limit
+    //                             ),
+    //                             maxLength: 150,
+    //                             onChanged: (value) => counterText =
+    //                                 '${notescontroller.text.length}/150', // Set the maximum allowed characters
+    //                           ),
+    //                         ),
+    //                       ),
+    //                       //Text("Notes cannot exceed 150 words",style: Theme.of(context).textTheme.bodySmall,),
+    //                     ],
+    //                   ),
+    //                 ),
+    //               ]),
+    //         ),
+    //       ),
+    //     );
+    //   },
+    // );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (BuildContext context) {
-        String counterText;
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            height: height / 1.9384615384615,
-            width: double.infinity,
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.6,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16,
+                    right: 16,
+                    top: 10,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      FilledButton(
-                        onPressed: () {
-                          Navigator.of(context)
-                              .pop(); // Call the saveAlarm function
-                        },
-                        child: Text("Cancel"),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: width / 3),
-                        child: FilledButton(
-                          onPressed: () {
-                            saveAlarm(context);
-                          },
-                          // Call the saveAlarm function
 
-                          child: Text("Set"),
+                      // 🔥 Drag Handle
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          margin: EdgeInsets.only(bottom: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
+
+                      // 🔥 Buttons Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text("Cancel"),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () => saveAlarm(context),
+                              child: Text("Set"),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 15),
+
+                      // 🔥 Radius widget
+                      MeterCalculatorWidget(
+                        callback: updateradiusvalue,
+                      ),
+
+                      SizedBox(height: 20),
+
+                      // 🔥 Alarm Name
+                      Text("Alarm Name:",
+                          style: Theme.of(context).textTheme.titleMedium),
+
+                      SizedBox(height: 8),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black12),
+                        ),
+                        child: TextField(
+                          controller: alramnamecontroller,
+                          maxLength: 50,
+                          maxLines: null,
+                          decoration: InputDecoration(
+                            hintText: "Alarm name",
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 15),
+
+                      // 🔥 Notes
+                      Text("Notes:",
+                          style: Theme.of(context).textTheme.titleMedium),
+
+                      SizedBox(height: 8),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black12),
+                        ),
+                        child: TextField(
+                          controller: notescontroller,
+                          maxLength: 150,
+                          maxLines: null,
+                          decoration: InputDecoration(
+                            hintText: "Notes",
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 20),
                     ],
                   ),
-
-                  // Integrate the MeterCalculatorWidget
-                  MeterCalculatorWidget(
-                    callback: updateradiusvalue,
-                  ),
-                  // Column(
-                  //   crossAxisAlignment: CrossAxisAlignment.start,
-                  //   children: [
-                  //     Text("Alarm Name:", style: Theme.of(context).textTheme.titleMedium,),
-                  //
-                  //     // Container(
-                  //     //   height:height/ 15.12,
-                  //     //   width: width/1.2,
-                  //     //   decoration: BoxDecoration(
-                  //     //     color: Colors.white,
-                  //     //     borderRadius: BorderRadius.circular(10),
-                  //     //     border: Border.all(color: Colors.black12),
-                  //     //
-                  //     //   ),child: Padding(
-                  //     //   padding:  EdgeInsets.only(left: width/36),
-                  //     //   child: TextField(
-                  //     //     controller: alramnamecontroller,
-                  //     //
-                  //     //     style: Theme.of(context).textTheme.bodyMedium,
-                  //     //     decoration: InputDecoration(
-                  //     //       hintText: "Alarm name",
-                  //     //       border: InputBorder.none,
-                  //     //       enabledBorder: InputBorder.none,
-                  //     //     ),
-                  //     //   ),
-                  //     // ),
-                  //     // ),
-                  //     // Container(
-                  //     //   height: height / 15.12,
-                  //     //   width: width / 1.2,
-                  //     //   decoration: BoxDecoration(
-                  //     //     color: Colors.white,
-                  //     //     borderRadius: BorderRadius.circular(10),
-                  //     //     border: Border.all(color: Colors.black12),
-                  //     //   ),
-                  //     //   child: Padding(
-                  //     //     padding: EdgeInsets.only(left: width / 36),
-                  //     //     child: TextFormField( // Use TextFormField instead of TextField
-                  //     //       controller: alramnamecontroller,
-                  //     //       style: Theme.of(context).textTheme.bodyMedium,
-                  //     //       decoration: InputDecoration(
-                  //     //         hintText: "Alarm name",
-                  //     //         border: InputBorder.none,
-                  //     //         enabledBorder: InputBorder.none,
-                  //     //         counterText: '', // Hide default character counter
-                  //     //       ),
-                  //     //       maxLength: 100, // Set character limit
-                  //     //       validator: (value) {
-                  //     //         if (value == null || value.isEmpty) {
-                  //     //           return 'Alarm name is required.';
-                  //     //         }
-                  //     //         if (value.length > 100) {
-                  //     //           return 'Alarm name cannot exceed 100 characters.';
-                  //     //         }
-                  //     //         return null; // Valid input
-                  //     //       },
-                  //     //       onChanged: (value) {
-                  //     //         // Optional: Update counter text manually (if desired)
-                  //     //         // setState(() {
-                  //     //          // counterText = value.length.toString();
-                  //     //         // });
-                  //     //       },
-                  //     //     ),
-                  //     //   ),
-                  //     // ),
-                  //     Container(
-                  //       height: height / 15.12,
-                  //       width: width / 1.2,
-                  //       decoration: BoxDecoration(
-                  //         color: Colors.white,
-                  //         borderRadius: BorderRadius.circular(10),
-                  //         border: Border.all(color: Colors.black12),
-                  //       ),
-                  //       child: Row(
-                  //         children: [
-                  //           Expanded(
-                  //             child: Padding(
-                  //               padding: EdgeInsets.only(left: width / 36),
-                  //               child: TextFormField(
-                  //                 controller: alramnamecontroller,
-                  //                 style: Theme.of(context).textTheme.bodyMedium,
-                  //                 decoration: InputDecoration(
-                  //                   hintText: "Alarm name",
-                  //                   border: InputBorder.none,
-                  //                   enabledBorder: InputBorder.none,
-                  //                   counterText: '', // Hide default character counter
-                  //                 ),
-                  //                 maxLength: 100, // Set character limit
-                  //                 validator: (value) {
-                  //                   // Check if the input is only whitespace characters or empty
-                  //                   if (value!.trim().isEmpty) {
-                  //                     return 'Alarm name is required.';
-                  //                   }
-                  //                   if (value.split(' ').length > 50) {
-                  //                     return 'Alarm name cannot exceed 50 words.';
-                  //                   }
-                  //                   if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
-                  //                     return 'Alarm name cannot contain special characters.';
-                  //                   }
-                  //                   return null; // Valid input
-                  //                 },
-                  //                 onChanged: (value) {
-                  //                   // Optional: Update counter text manually (if desired)
-                  //                   // setState(() {
-                  //                   //   counterText = value.length.toString();
-                  //                   // });
-                  //                 },
-                  //               ),
-                  //             ),
-                  //           ),
-                  //
-                  //         ],
-                  //       ),
-                  //     ),
-                  //
-                  //     Text("Notes:",style: Theme.of(context).textTheme.titleMedium,),
-                  //     Container(
-                  //       height: height/10.8,
-                  //       width:width/1.2,
-                  //       decoration: BoxDecoration(
-                  //         color: Colors.white,
-                  //         borderRadius: BorderRadius.circular(10),
-                  //         border: Border.all(color: Colors.black12),
-                  //       ),child: Padding(
-                  //       padding:  EdgeInsets.only(left: width/36),
-                  //       child: TextField(
-                  //         controller: notescontroller,
-                  //         style: Theme.of(context).textTheme.bodyMedium,
-                  //         decoration: InputDecoration(
-                  //           hintText: "Notes",
-                  //           border: InputBorder.none,
-                  //           enabledBorder: InputBorder.none,
-                  //         ),
-                  //       ),
-                  //     ),
-                  //     ),
-                  //   ],
-                  // ),
-                  Padding(
-                    padding: EdgeInsets.only(left: width / 15),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      // Align text to the start horizontally
-                      children: [
-                        Text(
-                          "Alarm Name:",
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Container(
-                          //height: 70,
-                          width: width / 1.1612903225806,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.black12),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                                left: width / 22.5, right: width / 22.5),
-                            child: TextField(
-                              textAlign: TextAlign.start,
-                              // keyboardType: TextInputType.multiline,
-                              maxLines: 2,
-                              controller: alramnamecontroller,
-                              // Set the desired number of lines for multi-line input
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              decoration: InputDecoration(
-                                hintText: "Alarmname",
-                                border: InputBorder.none,
-                                // Remove borders if desired (optional)
-                                enabledBorder: InputBorder
-                                    .none, // Remove borders if desired (optional)
-                                // Show current character count and limit
-                              ),
-                              maxLength: 50,
-                              onChanged: (value) => counterText =
-                                  '${alramnamecontroller.text.length}/50', // Set the maximum allowed characters
-                            ),
-                          ),
-                        ),
-                        //Text("Alarmname cannot exceed 50 words",style: Theme.of(context).textTheme.bodySmall,),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Text(
-                          "Notes:",
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Container(
-                          //height: 70,
-                          width: width / 1.1612903225806,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.black12),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                                left: width / 22.5, right: width / 22.5),
-                            child: TextField(
-                              textAlign: TextAlign.start,
-                              // keyboardType: TextInputType.multiline,
-                              maxLines: 2,
-                              controller: notescontroller,
-                              // Set the desired number of lines for multi-line input
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              decoration: InputDecoration(
-                                hintText: "Notes",
-                                border: InputBorder.none,
-                                // Remove borders if desired (optional)
-                                enabledBorder: InputBorder
-                                    .none, // Remove borders if desired (optional)
-                                // Show current character count and limit
-                              ),
-                              maxLength: 150,
-                              onChanged: (value) => counterText =
-                                  '${notescontroller.text.length}/150', // Set the maximum allowed characters
-                            ),
-                          ),
-                        ),
-                        //Text("Notes cannot exceed 150 words",style: Theme.of(context).textTheme.bodySmall,),
-                      ],
-                    ),
-                  ),
-                ]),
-          ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -2107,18 +2443,24 @@ class _MyHomePageState extends State<MyHomePage> {
               BorderRadius.circular(30.0), // Adjust the radius as needed
           // border: Border.all(color: Colors.black26), // Add border color
         ),
+
         inputDecoration: InputDecoration(
           hintText: "Alarm location",
+          hintStyle: Theme.of(context).textTheme.bodyMedium,
+
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+
+          contentPadding: EdgeInsets.symmetric(
+            vertical: 8,  // 🔥 THIS centers vertically
+            horizontal: 18,
+          ),
+
           suffixIcon: Icon(
             Icons.search,
             size: 25,
             color: Colors.black,
           ),
-          enabledBorder: InputBorder.none,
-          contentPadding: EdgeInsets.only(
-              top: 12.0,
-              left: 15.0), // Adjust the padding to move the hint text
         ),
         debounceTime: 400,
         countries: ["in", "fr"],
@@ -2160,18 +2502,17 @@ class _MyHomePageState extends State<MyHomePage> {
         },
 
         seperatedBuilder: Divider(),
-        containerHorizontalPadding: 10,
+       // containerHorizontalPadding: 10,
 
         // OPTIONAL// If you want to customize list view item builder
         itemBuilder: (context, index, Prediction prediction) {
           return Container(
+            color: Colors.white,
             padding: EdgeInsets.all(10),
             child: Row(
               children: [
                 Icon(Icons.location_on),
-                SizedBox(
-                  width: width / 51.428,
-                ),
+
                 Expanded(child: Text("${prediction.description ?? ""}"))
               ],
             ),
@@ -2293,25 +2634,24 @@ class _MeterCalculatorWidgetState extends State<MeterCalculatorWidget> {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Text(
-              'Radius',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: width / 2.5714),
-              child: Text((_radius / (_imperial ? 1 : 1000))
-                      .toStringAsFixed(_imperial ? 2 : 2) +
-                  ' ${_imperial ? 'miles' : 'Kilometers'}'),
-              //Text(_radius.toStringAsFixed(_imperial ? 2:0)+' ${_imperial ? 'miles' : 'meters'}'),
-            ),
-          ],
-        ),
+      children: [Row(
+        children: [
+          Text(
+            'Radius',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+
+          Spacer(), // ✅ pushes text to right automatically
+
+          AutoSizeText(
+            '${(_radius / (_imperial ? 1 : 1000)).toStringAsFixed(2)} ${_imperial ? 'miles' : 'Kilometers'}',
+            style: TextStyle(fontSize: 14),
+            maxLines: 1,
+          ),
+        ],
+      ),
         Container(
-          width: width / 1.16129,
+
           child: Slider(
             // Adjust max value according to your requirement
             value: _radius,
@@ -2338,3 +2678,10 @@ class _MeterCalculatorWidgetState extends State<MeterCalculatorWidget> {
 
 //0.05
 //5.05
+class ResponsiveHelper {
+  static bool isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.shortestSide >= 600;
+
+  static double sp(BuildContext context, double mobile, double tablet) =>
+      isTablet(context) ? tablet : mobile;
+}

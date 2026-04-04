@@ -3688,7 +3688,7 @@
 //                   actions: [
 //                     // Dismiss action
 //                     AndroidNotificationAction(
-//                       Uuid().v4(),
+//
 //                       'Dismiss',
 //                     ),
 //                     // Stop action
@@ -3711,7 +3711,7 @@
 //               'Reached destination radius',
 //               NotificationDetails(
 //                 android: AndroidNotificationDetails(
-//                   Uuid().v4(),
+//
 //                   'MY FOREGROUND SERVICE',
 //                   icon: 'ic_bg_service_small',
 //                   priority: Priority.high,
@@ -3726,7 +3726,7 @@
 //                   actions: [
 //                     // Dismiss action
 //                     AndroidNotificationAction(
-//                       Uuid().v4(),
+//
 //                       'Dismiss',
 //                     ),
 //                     // Stop action
@@ -4061,7 +4061,7 @@
 //                 'Reached your place',
 //                 NotificationDetails(
 //                   android: AndroidNotificationDetails(
-//                     Uuid().v4(),
+//
 //                     'MY FOREGROUND SERVICE',
 //                     icon: 'ic_notification',
 //                     sound: RawResourceAndroidNotificationSound(savedRingtone.replaceAll(".mp3", "")),
@@ -4069,7 +4069,7 @@
 //                     actions: [
 //                       // Dismiss action
 //                       AndroidNotificationAction(
-//                         Uuid().v4(),
+//
 //                         'Dismiss',
 //                       ),
 //                     ],
@@ -4174,13 +4174,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:audioplayers/audioplayers.dart' as ap;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as location;
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sound_mode/utils/constants.dart';
 import 'package:untitiled/main.dart';
-import 'package:untitiled/settingsexample.dart';
+
 import 'package:uuid/uuid.dart';
 import 'Apiutils.dart';
 import 'Homescreens/homescreen.dart';
@@ -4197,114 +4199,52 @@ import 'package:flutter/foundation.dart';
 import 'package:vibration/vibration.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-const notificationChannelId = '';
 const notificationId = 888;
-const notificationId2 = 999;
-const String channelId = 'your_channel_id';
-const String channelName = 'Your Channel Name';
-late AudioHandler _audioHandler;
 
+
+const channelId =  'alarm_channel_silent_final_999';
+const channelName = 'Alarm Notifications';
+late AudioHandler _audioHandler;
+ap.AudioPlayer? _audioPlayer;
 Timer? _timer;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MobileAds.instance.initialize();
-  // await JustAudioBackground.init(
-  //   androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
-  //   androidNotificationChannelName: 'Audio playback',
-  //   androidNotificationOngoing: true,
-  // );
 
-  // const AndroidInitializationSettings initializationSettingsAndroid =
-  // AndroidInitializationSettings('ic_notification');
-  // const InitializationSettings initializationSettings = InitializationSettings(
-  //   android: initializationSettingsAndroid,
-  // );
-  //
-  // await flutterLocalNotificationsPlugin.initialize(
-  //   initializationSettings,
-  //   onDidReceiveNotificationResponse:
-  //       (NotificationResponse notificationResponse) async {
-  //     switch (notificationResponse.notificationResponseType) {
-  //       case NotificationResponseType.selectedNotificationAction:
-  //         if (notificationResponse.actionId == "dismiss") {
-  //           await flutterLocalNotificationsPlugin.cancelAll();
-  //         }
-  //         break;
-  //       default:
-  //     }
-  //   },
-  // );
-  // BackgroundLocation.setAndroidNotification(
-  //   title: "GPS Alarm",
-  //   message: "Reached your place",
-  //   icon: "@mipmap/ic_launcher",
-  // );
-  // BackgroundLocation.setAndroidConfiguration(1000);
-  // BackgroundLocation.stopLocationService(); //To ensure that previously started services have been stopped, if desired
-  // BackgroundLocation.startLocationService(distanceFilter : 10,forceAndroidLocationManager: true);
-  // BackgroundLocation.getLocationUpdates((location) async {
-  //   List<AlarmDetails> alarms = [];
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   List<String>? alarmsJson = prefs.getStringList('alarms');
-  //   if (alarmsJson != null) {
-  //     alarms.addAll(
-  //         alarmsJson.map((json) => AlarmDetails.fromJson(jsonDecode(json)))
-  //             .toList());
-  //     for (var alarm in alarms) {
-  //       if (!alarm.isEnabled) {
-  //         continue;
-  //       }
-  //       double distance = calculateDistance(
-  //         LatLng(location.latitude!, location.longitude!),
-  //         LatLng(alarm.lat, alarm.lng),
-  //       );
-  //
-  //       if (distance <= alarm.locationRadius) {
-  //         var index=alarms.indexOf(alarm);
-  //         alarms[index].isEnabled=false;
-  //         SharedPreferences prefs = await SharedPreferences.getInstance();
-  //
-  //         List<Map<String, dynamic>> alarmsJson =
-  //         alarms.map((alarm) => alarm.toJson()).toList();
-  //
-  //         await prefs.setStringList(
-  //             'alarms', alarmsJson.map((json) => jsonEncode(json)).toList());
-  //         // Trigger notification (potentially using a separate channel)
-  //         _showNotification(alarm);
-  //         break; // Exit loop after triggering the first alarm
-  //       }
-  //       print("distance:"+distance.toString());
-  //       print("location radius:"+alarm.locationRadius.toString());
-  //       print("location:"+location.toString());
-  //     }
-  //   }
-  // });
-  //await initializeService();
-  // location.Location ls = new location.Location();
-  // if (await Permission.notification.request().isGranted &&
-  //     await Permission.location.request().isGranted &&
-  //     await ls.serviceEnabled()) {
-  //   await initializeService();
-  //   print('Permissions are granted');
-  // }else{
-  //   print('Permissions are not granted');
-  // }checkLocation()
 
   checkLocation();
-
+  await copyAssetsToStorage();
+ // await Permission.locationAlways.request();
   runApp(const MyApp());
 }
-
+Future<void> copyAssetsToStorage() async {
+  try {
+    final dir = await getApplicationDocumentsDirectory();
+    final prefs = await SharedPreferences.getInstance();
+    final ringtones = [
+      'alarm1.mp3', 'alarm2.mp3', 'alarm3.mp3',
+      'alarm4.mp3', 'alarm5.mp3', 'alarm6.mp3'
+    ];
+    for (final ringtone in ringtones) {
+      final file = File('${dir.path}/$ringtone');
+      // Force delete and re-copy every time to ensure fresh files
+      if (await file.exists()) {
+        await file.delete();
+      }
+      final data = await rootBundle.load('assets/$ringtone');
+      await file.writeAsBytes(data.buffer.asUint8List());
+      print("Copied: $ringtone to ${file.path}");
+    }
+    await prefs.setString('ringtoneDir', dir.path);
+    print("ringtoneDir saved: ${dir.path}");
+  } catch (e) {
+    print("copyAssetsToStorage error: $e");
+  }
+}
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
-  // AndroidNotificationChannel channel = AndroidNotificationChannel(
-  //   Uuid().v4(), // id
-  //   "MY FOREGROUND SERVICE", // title
-  //   description:
-  //   'Reached destination radius', // description
-  //   importance: Importance.high, // importance must be at low or higher level
-  // );
+
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
@@ -4314,6 +4254,27 @@ Future<void> initializeService() async {
     await flutterLocalNotificationsPlugin.initialize(
       const InitializationSettings(
         android: AndroidInitializationSettings('ic_bg_service_small'),
+      ),
+    );
+    final androidPlugin = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    await androidPlugin?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'alarm_sound_channel',
+        'Alarm Sound',
+        importance: Importance.max,
+        playSound: true,
+      ),
+    );
+
+    await androidPlugin?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'alarm_vibrate_channel',
+        'Alarm Vibration',
+        importance: Importance.max,
+        playSound: false,
       ),
     );
   }
@@ -4358,18 +4319,6 @@ class MyStream {
 }
 
 Future<void> checkLocation() async {
-  // Location location = Location();
-  // bool? serviceEnabled;
-  // PermissionStatus? permissionGranted;
-  // serviceEnabled = await location.serviceEnabled();
-  // if (!serviceEnabled) {
-  //   serviceEnabled = await location.requestService();
-  // }
-  // permissionGranted = await location.hasPermission();
-  // if (permissionGranted == PermissionStatus.denied) {
-  //   permissionGranted = await location.requestPermission();
-  // }
-
   location.Location ls = new location.Location();
   if (await Permission.notification.request().isGranted &&
       await Permission.location.request().isGranted &&
@@ -4392,7 +4341,7 @@ Future<void> checkLocation() async {
   }
 }
 
-bool _shouldHandleNotifications = true;
+
 
 dismissNotification(int? notificationId2) async {
   await flutterLocalNotificationsPlugin.cancel(notificationId2!);
@@ -4404,48 +4353,79 @@ void onDidReceiveNotificationResponse(
   final String? payload = notificationResponse.payload;
   if (notificationResponse.id == notificationId) {
     await Vibration.cancel();
-    Alarmplayer alarmplayer = Alarmplayer();
-    await alarmplayer.StopAlarm();
-    debugPrint('notification payload: $payload');
-    debugPrint('valid notification');
+    // Alarmplayer alarmplayer = Alarmplayer();
+    // await alarmplayer.stop();
+    // debugPrint('notification payload: $payload');
+    // debugPrint('valid notification');
   }
 }
 
+
+Future<List<String>> getSelectedOptions() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final selectedOptions =
+      prefs.getStringList('selectedOptions') ?? []; // ✅ EMPTY LIST
+
+  print("LOADED OPTIONS: $selectedOptions");
+
+  return selectedOptions;
+}
+Future<String> getSelectedRingtone() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final ringtone =
+      prefs.getString('selectedRingtone') ?? "alarm6.mp3";
+
+  print("LOADED RINGTONE: $ringtone");
+
+  return ringtone;
+}
+// Future<bool> containsOption(String option) async {
+//   final prefs = await SharedPreferences.getInstance();
+//
+//   final selectedOptions =
+//       prefs.getStringList('selectedOptions') ?? []; // ✅ FIXED
+//
+//   print("selectedoptions:$selectedOptions");
+//
+//   return selectedOptions.contains(option);
+// }
+// Future<void> playAlarm() async {
+//   // Get saved ringtone preference
+//   final prefs = await SharedPreferences.getInstance();
+//   final savedRingtone = prefs.getString('selectedRingtone') ?? "alarm6.mp3";
+//   final ringtonePath =
+//       'assets/$savedRingtone'; // Assuming assets folder structure
+//
+//   // Create Alarmplayer instance
+//   final alarmplayer = Alarmplayer();
+//
+//   // Play alarm with saved ringtone path
+//   try {
+//     await alarmplayer.play(
+//       url: ringtonePath,
+//       volume: 1.0, // Adjust volume as needed
+//       looping: true,
+//       // Set looping behavior (optional)
+//     );
+//     print("Alarm started playing!");
+//   } catch (error) {
+//     print("Error playing alarm: $error");
+//   } finally {
+//     // Optional: Clean up resources (consider if needed)
+//     // await alarmplayer.stop(); // Stop the alarm if necessary
+//   }
+// }
 Future<bool> containsOption(String option) async {
   final prefs = await SharedPreferences.getInstance();
-  final selectedOptions =
-      prefs.getStringList('selectedOptions') ?? <String>['alarms'];
+  await prefs.reload();
+  final selectedOptions = prefs.getStringList('selectedOptions') ?? <String>[];
   print("selectedoptions:$selectedOptions");
+  // If empty and checking for alarms, return true (default behavior)
+  if (selectedOptions.isEmpty && option == 'alarms') return true;
   return selectedOptions.contains(option);
 }
-
-Future<void> playAlarm() async {
-  // Get saved ringtone preference
-  final prefs = await SharedPreferences.getInstance();
-  final savedRingtone = prefs.getString('selectedRingtone') ?? "alarm6.mp3";
-  final ringtonePath =
-      'assets/$savedRingtone'; // Assuming assets folder structure
-
-  // Create Alarmplayer instance
-  final alarmplayer = Alarmplayer();
-
-  // Play alarm with saved ringtone path
-  try {
-    await alarmplayer.Alarm(
-      url: ringtonePath,
-      volume: 1.0, // Adjust volume as needed
-      looping: true,
-      // Set looping behavior (optional)
-    );
-    print("Alarm started playing!");
-  } catch (error) {
-    print("Error playing alarm: $error");
-  } finally {
-    // Optional: Clean up resources (consider if needed)
-    // await alarmplayer.stop(); // Stop the alarm if necessary
-  }
-}
-
 Future<void> startVibration() async {
   if (_timer == null || !_timer!.isActive) {
     _timer = Timer.periodic(Duration(milliseconds: 500), (Timer timer) {
@@ -4564,77 +4544,118 @@ Future<void> _startLocationUpdates(ServiceInstance service) async {
           print(prefs.getStringList('alarms'));
           await prefs.reload();
           print(prefs.getStringList('alarms'));
-          final savedRingtone =
-              prefs.getString('selectedRingtone') ?? "alarm6.mp3";
-          flutterLocalNotificationsPlugin.show(
+
+
+
+
+        //       flutterLocalNotificationsPlugin.show(
+        //         notificationId,
+        //         alarm.alarmName,
+        //         'Reached destination radius',
+        //         NotificationDetails(
+        //           android: AndroidNotificationDetails(
+        //             channelId,
+        //             channelName,
+        //             icon: 'ic_bg_service_small',
+        //             priority: Priority.high,
+        //             importance: Importance.max,
+        //           //  playSound:false,
+        //          //   sound:null,
+        //             enableVibration: shouldVibrate,
+        //             vibrationPattern: shouldVibrate
+        //                 ? Int64List.fromList([0, 500, 200, 500])
+        //                 : null,
+        //             additionalFlags: Int32List.fromList([4]),
+        //             fullScreenIntent: true,
+        //             ongoing: true,
+        //             autoCancel: false,
+        //             actions: [
+        //               AndroidNotificationAction(channelId, 'Dismiss'),
+        //             ],
+        //           ),
+        //         ),
+        //         payload: 'dismiss',
+        //       );
+        //
+        //     //   if (await containsOption('alarms')) {
+        //     // final prefs = await SharedPreferences.getInstance();
+        //     // final savedRingtone =
+        //     //     prefs.getString('selectedRingtone') ?? "alarm6.mp3";
+        //     // // final isVibrateEnabled = prefs.getBool(kSharedPrefVibrate!) ?? false;
+        //     // // Trigger notification with sound regardless of service state
+        //     // await playAlarm();
+        //     // print(savedRingtone);
+        // //  }
+        //
+        //   if (shouldVibrate) {
+        //     Vibration.vibrate(pattern: [500, 1000], repeat: 0);
+        //   }
+          // Get options
+
+          final selectedOptions =
+              prefs.getStringList('selectedOptions') ?? [];
+
+// 🔥 DEFAULT: if empty → play alarm
+          bool shouldPlaySound =
+              selectedOptions.isEmpty || selectedOptions.contains('alarms');
+
+// 📳 vibrate only if selected
+          bool shouldVibrate =
+          selectedOptions.contains('vibrate');
+
+          print("OPTIONS: $selectedOptions");
+          print("shouldPlaySound: $shouldPlaySound");
+          print("shouldVibrate: $shouldVibrate");
+// Silent notification
+          await flutterLocalNotificationsPlugin.show(
             notificationId,
             alarm.alarmName,
             'Reached destination radius',
             NotificationDetails(
               android: AndroidNotificationDetails(
-                Uuid().v4(),
-                'MY FOREGROUND SERVICE',
+                // 🔥 channel based on mode
+               channelName,
+                channelId,
                 icon: 'ic_bg_service_small',
                 priority: Priority.high,
                 importance: Importance.max,
-                playSound: false,
-                // sound: RawResourceAndroidNotificationSound(
-                //     savedRingtone.replaceAll(".mp3", "")),
-                // playSound: await containsOption('alarms') &&
-                //     !(await containsOption('alarms in silent mode')),
-                enableVibration: false,
-                additionalFlags: Int32List.fromList(<int>[4]),
-                ticker: 'ticker',
+
+                // 🔊 SOUND
+                playSound: shouldPlaySound,
+                sound: shouldPlaySound
+                    ? RawResourceAndroidNotificationSound('alarm6')
+                    : null,
+
+                // 📳 VIBRATION
+                enableVibration: shouldVibrate,
+                vibrationPattern: shouldVibrate
+                    ? Int64List.fromList([0, 500, 200, 500])
+                    : null,
+
+                fullScreenIntent: true,
+                category: AndroidNotificationCategory.alarm,
+
                 ongoing: true,
                 autoCancel: false,
+
                 actions: [
-                  // Dismiss action
-                  AndroidNotificationAction(
-                    Uuid().v4(),
-                    'dismiss',
-                  ),
+                  AndroidNotificationAction('dismiss', 'Dismiss'),
                 ],
-                styleInformation: DefaultStyleInformation(true, true),
               ),
             ),
-            payload: 'notificationId:$notificationId2',
+            payload: 'dismiss',
           );
-          if (await containsOption('alarms')) {
-            final prefs = await SharedPreferences.getInstance();
-            final savedRingtone =
-                prefs.getString('selectedRingtone') ?? "alarm6.mp3";
-            // final isVibrateEnabled = prefs.getBool(kSharedPrefVibrate!) ?? false;
-            // Trigger notification with sound regardless of service state
-            await playAlarm();
-            print(savedRingtone);
-          }
 
-          // if (await containsOption('alarms in silent mode')) {
-          //   final prefs = await SharedPreferences.getInstance();
-          //   final savedRingtone =
-          //       prefs.getString('selectedRingtone') ?? "alarm6.mp3";
-          //   // final isVibrateEnabled = prefs.getBool(kSharedPrefVibrate!) ?? false;
-          //   // Trigger notification with sound regardless of service state
-          //   await playAlarm();
-          //   print(savedRingtone);
-          // }
+// Play sound
+          // Play sound
 
-          if (await containsOption('vibrate')) {
-            // startVibration();
-            // while (true) {
-            //   print("vibration is ringing");// Replace with user-defined stopping condition
-            //   Vibration.vibrate(pattern: [500, 1000]); // Adjust pattern as needed
-            //   await Future.delayed(Duration(milliseconds: 100)); // Adjust delay as needed
-            // }
-            // while (_shouldVibrate) {
-            //   print("vibration is ringing");// Loop with stopping condition
-            //   Vibration.vibrate(pattern: [500, 1000]); // Adjust pattern as needed
-            //   await Future.delayed(Duration(milliseconds: 1500)); // Adjust delay as needed
-            // }
-            // Vibration.vibrate(pattern: [500, 1000, 500, 2000]);
-            // startVibration();
+
+// Vibrate
+          if (shouldVibrate) {
             Vibration.vibrate(pattern: [500, 1000], repeat: 0);
           }
+// Play sound manually if user chose "alarms"
+
           service.invoke('alarmPlayed', {"alarmId": alarm.id});
           _positionStreamSubscription?.cancel();
           print('preparing to stop service');
@@ -4666,40 +4687,7 @@ Future<void> dispose() async {
   await Vibration.cancel();
 }
 
-// Future<double> calculateMinDistance(Position position, List<AlarmDetails> alarms) async {
-//
-//   double minDistance = double.infinity;
-//     AlarmDetails? nearestAlarm;
-//
-//     for (var alarm in alarms) {
-//       if (!alarm.isEnabled) continue;
-//
-//       double alarmDistance = Geolocator.distanceBetween(
-//         position.latitude,
-//         position.longitude,
-//         alarm.lat,
-//         alarm.lng,
-//       );
-//       List<AlarmDetails> alarms = [];
-//       SharedPreferences prefs = await SharedPreferences.getInstance();
-//       prefs.reload();
-//       List<String>? alarmsJson = prefs.getStringList('alarms');
-//       if (alarmsJson != null) {
-//         alarms.addAll(alarmsJson
-//             .map((json) => AlarmDetails.fromJson(jsonDecode(json)))
-//             .where((element) => element.isEnabled)
-//             .toList());
-//       }
-//
-//       if (alarmDistance < minDistance) {
-//         minDistance = alarmDistance;
-//         nearestAlarm = alarm;
-//       }
-//
-//     }
-//
-//   return minDistance;
-// }
+
 StreamSubscription<Position>? _positionStreamSubscription;
 
 Future<double> calculateMinDistance(
@@ -4718,11 +4706,12 @@ Future<double> calculateMinDistance(
   for (var alarm in alarms) {
     if (!alarm.isEnabled) continue;
     double alarmDistance = Geolocator.distanceBetween(
-      position.latitude,
-      position.longitude,
-      alarm.lat,
-      alarm.lng,
-    ) - alarm.locationRadius;
+          position.latitude,
+          position.longitude,
+          alarm.lat,
+          alarm.lng,
+        ) -
+        alarm.locationRadius;
 
     print(
         'Distance to alarm at (${alarm.lat}, ${alarm.lng}): $alarmDistance meters');
@@ -4740,14 +4729,14 @@ Future<double> calculateMinDistance(
     print('No enabled alarms found.');
   }
 
-  if(minDistance < 1) {
+  if (minDistance < 1) {
     minDistance = 1;
   }
 
   // Halve the minDistance value
   double halfMinDistance = minDistance;
 
-  if(halfMinDistance > 2) {
+  if (halfMinDistance > 2) {
     halfMinDistance = halfMinDistance / 2;
   }
 
@@ -4804,7 +4793,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xff4345b4)),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xff860111)),
         textTheme: GoogleFonts.robotoFlexTextTheme(),
       ),
       debugShowCheckedModeBanner: false,
@@ -4861,3 +4850,461 @@ class _SplashscreenState extends State<Splashscreen> {
     );
   }
 }
+// import 'dart:io';
+// import 'dart:async';
+// import 'dart:convert';
+// import 'dart:math' as math;
+// import 'dart:typed_data';
+//
+// import 'package:alarmplayer/alarmplayer.dart';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_background_service/flutter_background_service.dart';
+// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// import 'package:geolocator/geolocator.dart';
+// import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:permission_handler/permission_handler.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:vibration/vibration.dart';
+//
+// import 'Apiutils.dart';
+// import 'Homescreens/save_alarm_page.dart';
+// import 'Homescreens/settings.dart';
+// import 'Map screen page.dart';
+// import 'Track.dart';
+// import 'about page.dart';
+//
+// // ─── Constants ────────────────────────────────────────────────────────────────
+// const int    kNotificationId  = 888;
+// const String kChannelId       = 'gps_alarm_channel';
+// const String kChannelName     = 'GPS Alarm Notifications';
+// const String kDismissActionId = 'dismiss_alarm';
+//
+// // ─── Global notification plugin (needed in background isolate) ────────────────
+// final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+// FlutterLocalNotificationsPlugin();
+//
+// // ─── Global alarm player (accessible from both main & background) ─────────────
+// Alarmplayer _alarmPlayer = Alarmplayer();
+// Timer?       _vibrationTimer;
+//
+// // ══════════════════════════════════════════════════════════════════════════════
+// // ENTRY POINT
+// // ══════════════════════════════════════════════════════════════════════════════
+// Future<void> main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   MobileAds.instance.initialize();
+//   await _requestPermissionsAndStartService();
+//   runApp(const MyApp());
+// }
+//
+// // ─── Permission check + service init ─────────────────────────────────────────
+// Future<void> _requestPermissionsAndStartService() async {
+//   final locStatus  = await Permission.location.request();
+//   final notifStatus = await Permission.notification.request();
+//
+//   if (locStatus.isGranted && notifStatus.isGranted) {
+//     await initializeService();
+//     print('Permissions granted — service initialized');
+//   } else {
+//     print('Permissions not granted');
+//   }
+// }
+//
+// // Also called from UI (checkLocation)
+// Future<void> checkLocation() async {
+//   await _requestPermissionsAndStartService();
+// }
+//
+// // ══════════════════════════════════════════════════════════════════════════════
+// // BACKGROUND SERVICE SETUP
+// // ══════════════════════════════════════════════════════════════════════════════
+// Future<void> initializeService() async {
+//   final service = FlutterBackgroundService();
+//
+//   if (Platform.isAndroid) {
+//     await flutterLocalNotificationsPlugin.initialize(
+//       const InitializationSettings(
+//         android: AndroidInitializationSettings('ic_bg_service_small'),
+//       ),
+//     );
+//   }
+//
+//   await service.configure(
+//     androidConfiguration: AndroidConfiguration(
+//       onStart:                    onStart,
+//       initialNotificationTitle:   'GPS Alarm Running',
+//       initialNotificationContent: 'Monitoring your location…',
+//       autoStart:                  false,
+//       isForegroundMode:           true,
+//     ),
+//     iosConfiguration: IosConfiguration(
+//       autoStart:   false,
+//       onForeground: onStart,
+//     ),
+//   );
+// }
+//
+// // ══════════════════════════════════════════════════════════════════════════════
+// // NOTIFICATION DISMISS HANDLER  (called when user taps "Dismiss" action)
+// // !! MUST be a top-level function and annotated !!
+// // ══════════════════════════════════════════════════════════════════════════════
+// @pragma('vm:entry-point')
+// void onDidReceiveNotificationResponse(
+//     NotificationResponse notificationResponse) async {
+//   print('Notification response: id=${notificationResponse.id} '
+//       'action=${notificationResponse.actionId} '
+//       'payload=${notificationResponse.payload}');
+//
+//   // Stop alarm sound
+//   try {
+//     await _alarmPlayer.stop();
+//   } catch (e) {
+//     print('StopAlarm error: $e');
+//   }
+//
+//   // Stop vibration
+//   _vibrationTimer?.cancel();
+//   _vibrationTimer = null;
+//   try {
+//     await Vibration.cancel();
+//   } catch (e) {
+//     print('Vibration cancel error: $e');
+//   }
+//
+//   // Cancel the notification itself
+//   await flutterLocalNotificationsPlugin.cancel(kNotificationId);
+//
+//   print('Alarm fully stopped by user');
+// }
+//
+// // ══════════════════════════════════════════════════════════════════════════════
+// // BACKGROUND SERVICE onStart  — runs in a separate Dart isolate
+// // ══════════════════════════════════════════════════════════════════════════════
+// @pragma('vm:entry-point')
+// Future<void> onStart(ServiceInstance service) async {
+//   // Init notifications inside the background isolate
+//   await flutterLocalNotificationsPlugin.initialize(
+//     const InitializationSettings(
+//       android: AndroidInitializationSettings('ic_bg_service_small'),
+//     ),
+//     onDidReceiveNotificationResponse:           onDidReceiveNotificationResponse,
+//     onDidReceiveBackgroundNotificationResponse: onDidReceiveNotificationResponse,
+//   );
+//
+//   // Start location loop
+//   await _startLocationUpdates(service);
+// }
+//
+// // ══════════════════════════════════════════════════════════════════════════════
+// // LOCATION UPDATES LOOP
+// // ══════════════════════════════════════════════════════════════════════════════
+// StreamSubscription<Position?>? _locationSubscription;
+//
+// Future<void> _startLocationUpdates(ServiceInstance service) async {
+//   // Cancel any existing subscription first
+//   await _locationSubscription?.cancel();
+//
+//   // Calculate smart distance filter
+//   Position initial;
+//   try {
+//     initial = await Geolocator.getCurrentPosition(
+//       desiredAccuracy: LocationAccuracy.high,
+//     );
+//   } catch (e) {
+//     print('Could not get initial position: $e');
+//     return;
+//   }
+//
+//   final alarms      = await _loadEnabledAlarms();
+//   final distFilter  = await _calculateDistanceFilter(initial, alarms);
+//
+//   print('Starting location updates — distFilter: $distFilter m');
+//
+//   _locationSubscription = Geolocator.getPositionStream(
+//     locationSettings: LocationSettings(
+//       accuracy:       LocationAccuracy.high,
+//       distanceFilter: distFilter.toInt().clamp(1, 500),
+//     ),
+//   ).listen((Position? position) async {
+//     if (position == null) return;
+//     await _checkAlarms(position, service);
+//   });
+//
+//   // Handle stopService command from UI
+//   service.on('stopService').listen((_) async {
+//     print('Service stop requested');
+//     await _locationSubscription?.cancel();
+//     await _alarmPlayer.stop();
+//     service.invoke('stopped');
+//     service.stopSelf();
+//   });
+// }
+//
+// // ──────────────────────────────────────────────────────────────────────────────
+// // Check alarms against current position
+// // ──────────────────────────────────────────────────────────────────────────────
+// Future<void> _checkAlarms(Position position, ServiceInstance service) async {
+//   final prefs     = await SharedPreferences.getInstance();
+//   await prefs.reload();
+//
+//   final alarmsJson = prefs.getStringList('alarms');
+//   if (alarmsJson == null || alarmsJson.isEmpty) {
+//     // No alarms — stop service
+//     await _locationSubscription?.cancel();
+//     service.invoke('stopped');
+//     service.stopSelf();
+//     return;
+//   }
+//
+//   final alarms = alarmsJson
+//       .map((j) => AlarmDetails.fromJson(jsonDecode(j)))
+//       .where((a) => a.isEnabled)
+//       .toList();
+//
+//   if (alarms.isEmpty) {
+//     await _locationSubscription?.cancel();
+//     service.invoke('stopped');
+//     service.stopSelf();
+//     return;
+//   }
+//
+//   for (final alarm in alarms) {
+//     final dist = _haversineDistance(
+//       LatLng(position.latitude, position.longitude),
+//       LatLng(alarm.lat, alarm.lng),
+//     );
+//
+//     print('Alarm "${alarm.alarmName}" — distance: ${dist.toStringAsFixed(0)} m '
+//         '/ radius: ${alarm.locationRadius.toStringAsFixed(0)} m');
+//
+//     if (dist <= alarm.locationRadius) {
+//       // ── ALARM TRIGGERED ──────────────────────────────────────────────────
+//       print('ALARM TRIGGERED: ${alarm.alarmName}');
+//
+//       // 1. Mark alarm as disabled in prefs
+//       final allAlarms = alarmsJson
+//           .map((j) => AlarmDetails.fromJson(jsonDecode(j)))
+//           .toList();
+//       for (var a in allAlarms) {
+//         if (a.id == alarm.id) a.isEnabled = false;
+//       }
+//       await prefs.setStringList(
+//         'alarms',
+//         allAlarms.map((a) => jsonEncode(a.toJson())).toList(),
+//       );
+//
+//       // 2. Get user preferences
+//       final selectedOptions =
+//           prefs.getStringList('selectedOptions') ?? ['alarms'];
+//       final savedRingtone =
+//           prefs.getString('selectedRingtone') ?? 'alarm6.mp3';
+//
+//       final shouldPlaySound  = selectedOptions.contains('alarms');
+//       final shouldVibrate    = selectedOptions.contains('vibrate');
+//
+//       // 3. Show notification (no sound from system — we play manually)
+//       await flutterLocalNotificationsPlugin.show(
+//         kNotificationId,
+//         alarm.alarmName,
+//         'You have reached your destination!',
+//         NotificationDetails(
+//           android: AndroidNotificationDetails(
+//             kChannelId,
+//             kChannelName,
+//             icon:              'ic_bg_service_small',
+//             priority:          Priority.max,
+//             importance:        Importance.max,
+//             playSound:         false,   // We play sound manually
+//             enableVibration:   false,   // We vibrate manually
+//             ongoing:           false,   // Allow dismiss by swipe
+//             autoCancel:        true,    // Auto cancel on tap
+//             fullScreenIntent:  true,
+//             additionalFlags:   Int32List.fromList([4]),
+//             ticker:            'GPS Alarm triggered',
+//             actions: [
+//               AndroidNotificationAction(
+//                 kDismissActionId,
+//                 'Dismiss',
+//                 cancelNotification: true,  // Cancels notification on tap
+//                 showsUserInterface: false,
+//               ),
+//             ],
+//             styleInformation: BigTextStyleInformation(
+//               'You have reached the destination for "${alarm.alarmName}". '
+//                   'Tap Dismiss to stop the alarm.',
+//             ),
+//           ),
+//         ),
+//         payload: 'alarm:${alarm.id}',
+//       );
+//
+//       // 4. Play alarm sound
+//       if (shouldPlaySound) {
+//         await _playAlarmSound('assets/$savedRingtone');
+//       }
+//
+//       // 5. Vibrate
+//       if (shouldVibrate) {
+//         _startVibration();
+//       }
+//
+//       // 6. Notify UI
+//       service.invoke('alarmPlayed', {'alarmId': alarm.id});
+//
+//       // 7. Stop location updates — one alarm at a time
+//       await _locationSubscription?.cancel();
+//       break;
+//     }
+//   }
+// }
+//
+// // ──────────────────────────────────────────────────────────────────────────────
+// // Play alarm sound (looping)
+// // ──────────────────────────────────────────────────────────────────────────────
+// Future<void> _playAlarmSound(String assetPath) async {
+//   try {
+//     await _alarmPlayer.play(
+//       url:     assetPath,
+//       volume:  1.0,
+//       looping: true,
+//     );
+//     print('Alarm sound playing: $assetPath');
+//   } catch (e) {
+//     print('Error playing alarm sound: $e');
+//   }
+// }
+//
+// // ──────────────────────────────────────────────────────────────────────────────
+// // Vibration loop
+// // ──────────────────────────────────────────────────────────────────────────────
+// void _startVibration() {
+//   _vibrationTimer?.cancel();
+//   _vibrationTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+//     Vibration.vibrate(duration: 800);
+//   });
+//   Vibration.vibrate(duration: 800); // Immediate first vibration
+// }
+//
+// // ══════════════════════════════════════════════════════════════════════════════
+// // HELPERS
+// // ══════════════════════════════════════════════════════════════════════════════
+//
+// Future<List<AlarmDetails>> _loadEnabledAlarms() async {
+//   final prefs      = await SharedPreferences.getInstance();
+//   final alarmsJson = prefs.getStringList('alarms') ?? [];
+//   return alarmsJson
+//       .map((j) => AlarmDetails.fromJson(jsonDecode(j)))
+//       .where((a) => a.isEnabled)
+//       .toList();
+// }
+//
+// /// Smart distance filter: half the distance to the nearest alarm minus its radius
+// Future<double> _calculateDistanceFilter(
+//     Position position, List<AlarmDetails> alarms) async {
+//   if (alarms.isEmpty) return 100;
+//
+//   double minDist = double.infinity;
+//   for (final alarm in alarms) {
+//     final d = Geolocator.distanceBetween(
+//       position.latitude, position.longitude,
+//       alarm.lat,          alarm.lng,
+//     ) -
+//         alarm.locationRadius;
+//     if (d < minDist) minDist = d;
+//   }
+//
+//   // Clamp: minimum 10 m, maximum 200 m, halved
+//   final filter = (minDist / 2).clamp(10.0, 200.0);
+//   return filter;
+// }
+//
+// double degreesToRadians(double degrees) => degrees * math.pi / 180;
+//
+// /// Haversine distance in metres
+// double _haversineDistance(LatLng a, LatLng b) {
+//   const R = 6371000.0;
+//   final lat1 = degreesToRadians(a.latitude);
+//   final lat2 = degreesToRadians(b.latitude);
+//   final dLat = degreesToRadians(b.latitude  - a.latitude);
+//   final dLon = degreesToRadians(b.longitude - a.longitude);
+//
+//   final x = math.sin(dLat / 2) * math.sin(dLat / 2) +
+//       math.cos(lat1) * math.cos(lat2) *
+//           math.sin(dLon / 2) * math.sin(dLon / 2);
+//   return R * 2 * math.atan2(math.sqrt(x), math.sqrt(1 - x));
+// }
+//
+// // Keep old name so existing callers still work
+// double calculateDistance(LatLng p1, LatLng p2) => _haversineDistance(p1, p2);
+//
+// // ══════════════════════════════════════════════════════════════════════════════
+// // APP
+// // ══════════════════════════════════════════════════════════════════════════════
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       theme: ThemeData(
+//         useMaterial3:   true,
+//         colorScheme:    ColorScheme.fromSeed(seedColor: const Color(0xff860111)),
+//         textTheme:      GoogleFonts.robotoFlexTextTheme(),
+//       ),
+//       debugShowCheckedModeBanner: false,
+//       home: const Splashscreen(),
+//       routes: {
+//         '/home':       (_) => MyAlarmsPage(),
+//         '/secondpage': (_) => MyHomePage(),
+//         '/thirdpage':  (_) => const Settings(),
+//         '/about':      (_) => About(),
+//       },
+//     );
+//   }
+// }
+//
+// // ══════════════════════════════════════════════════════════════════════════════
+// // SPLASH SCREEN
+// // ══════════════════════════════════════════════════════════════════════════════
+// class Splashscreen extends StatefulWidget {
+//   const Splashscreen({super.key});
+//
+//   @override
+//   _SplashscreenState createState() => _SplashscreenState();
+// }
+//
+// class _SplashscreenState extends State<Splashscreen> {
+//   @override
+//   void initState() {
+//     super.initState();
+//     _checkUserStatus();
+//   }
+//
+//   Future<void> _checkUserStatus() async {
+//     final prefs         = await SharedPreferences.getInstance();
+//     final hasSetSettings = prefs.getBool('hasSetSettings') ?? false;
+//
+//     if (!mounted) return;
+//
+//     if (hasSetSettings) {
+//       Navigator.of(context).pushReplacement(
+//         MaterialPageRoute(builder: (_) => MyAlarmsPage()),
+//       );
+//     } else {
+//       Navigator.of(context).pushReplacement(
+//         MaterialPageRoute(builder: (_) => const Settings()),
+//       );
+//     }
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Scaffold(
+//       body: Center(child: CircularProgressIndicator()),
+//     );
+//   }
+//}

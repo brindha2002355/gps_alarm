@@ -19,6 +19,7 @@ import '../Apiutils.dart';
 import '../Map screen page.dart';
 import '../about page.dart';
 import '../adhelper.dart';
+import '../drawer.dart';
 import '../main.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 
@@ -341,95 +342,129 @@ class _MyAlarmsPageState extends State<MyAlarmsPage> {
               // backgroundColor: Color(0xffFFEF9A9A),
               title: Text("GPS Alarm"),
             ),
-            drawer: NavigationDrawer(
-              onDestinationSelected: (int index) {
-                handleScreenChanged(
-                    index); // Assuming you have a handleScreenChanged function
-              },
-              selectedIndex: screenIndex,
-              children: <Widget>[
-                SizedBox(
-                  height: height / 23.625,
-                ),
-                NavigationDrawerDestination(
-                  icon: Icon(Icons.alarm_on_outlined), // Adjust size as needed
-                  label: Text('Saved Alarms'),
-                  // Set selected based on screenIndex
-                ),
-                NavigationDrawerDestination(
-                  icon: Icon(Icons.alarm),
-                  label: Text('Set a Alarm'),
-                  // Set selected based on screenIndex
-                ),
-                NavigationDrawerDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  label: Text('Settings'),
-                  // Set selected based on screenIndex
-                ),
-                Divider(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
-                  child: Text(
-                    'Communicate', // Assuming this is the header
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                NavigationDrawerDestination(
-                  icon: Icon(Icons.share_outlined),
-                  label: Text('Share'),
-
-                  // Set selected based on screenIndex
-                ),
-                NavigationDrawerDestination(
-                  icon: Icon(Icons.rate_review_outlined),
-                  label: Text('Rate/Review'),
-                  // Set selected based on screenIndex
-                ),
-                Divider(),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(28, 16, 16, 10),
-                  child: Text(
-                    'App', // Assuming this is the header
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                NavigationDrawerDestination(
-                  icon: Icon(Icons.error_outline_outlined),
-                  label: Text('About'),
-                  // Set selected based on screenIndex
-                ),
-              ],
+            drawer: AppDrawer( selectedIndex: screenIndex,
+              onDestinationSelected: handleScreenChanged,
             ),
+            // NavigationDrawer(
+            //   onDestinationSelected: (int index) {
+            //     handleScreenChanged(
+            //         index); // Assuming you have a handleScreenChanged function
+            //   },
+            //   selectedIndex: screenIndex,
+            //   children: <Widget>[
+            //     SizedBox(
+            //       height: height / 23.625,
+            //     ),
+            //     NavigationDrawerDestination(
+            //       icon: Icon(Icons.alarm_on_outlined), // Adjust size as needed
+            //       label: Text('Saved Alarms'),
+            //       // Set selected based on screenIndex
+            //     ),
+            //     NavigationDrawerDestination(
+            //       icon: Icon(Icons.alarm),
+            //       label: Text('Set a Alarm'),
+            //       // Set selected based on screenIndex
+            //     ),
+            //     NavigationDrawerDestination(
+            //       icon: Icon(Icons.settings_outlined),
+            //       label: Text('Settings'),
+            //       // Set selected based on screenIndex
+            //     ),
+            //     Divider(),
+            //     Padding(
+            //       padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
+            //       child: Text(
+            //         'Communicate', // Assuming this is the header
+            //         style: Theme.of(context).textTheme.titleSmall,
+            //       ),
+            //     ),
+            //     NavigationDrawerDestination(
+            //       icon: Icon(Icons.share_outlined),
+            //       label: Text('Share'),
+            //
+            //       // Set selected based on screenIndex
+            //     ),
+            //     NavigationDrawerDestination(
+            //       icon: Icon(Icons.rate_review_outlined),
+            //       label: Text('Rate/Review'),
+            //       // Set selected based on screenIndex
+            //     ),
+            //     Divider(),
+            //     Padding(
+            //       padding: EdgeInsets.fromLTRB(28, 16, 16, 10),
+            //       child: Text(
+            //         'App', // Assuming this is the header
+            //         style: Theme.of(context).textTheme.titleSmall,
+            //       ),
+            //     ),
+            //     NavigationDrawerDestination(
+            //       icon: Icon(Icons.error_outline_outlined),
+            //       label: Text('About'),
+            //       // Set selected based on screenIndex
+            //     ),
+            //   ],
+            // ),
             body: Stack(
               children: [
                 alarms.isEmpty
                     ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  Alarmplayer alarmplayer = Alarmplayer();
-                                  alarmplayer.StopAlarm();
-                                },
-                                child: Lottie.asset(
-                                  'assets/newlocationalarm.json',
-                                  // Your empty list Lottie animation
-                                  width: 300, // Adjust as needed
-                                  height: 300, // Adjust as needed
-                                ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(0),
+                    child: Column(
+
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Alarmplayer alarmplayer = Alarmplayer();
+                            alarmplayer.stop();
+                          },
+                          child:
+                          Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()
+                              ..rotateX(0.3)
+                              ..rotateY(0.2),
+                            child: Lottie.asset(
+                              'assets/newlocationalarm.json',
+                              width: 300,
+                              height: 300,
+                              delegates: LottieDelegates(
+                                values: [
+                                  ValueDelegate.color(
+                                    ['**'],
+                                    value: Color(0xffb22222),
+                                  ),
+                                ],
                               ),
-                              Text("No Alarms",
-                                  style:
-                                      Theme.of(context).textTheme.titleLarge),
-                              Text("Create a new alarm",
-                                  style:
-                                      Theme.of(context).textTheme.bodyMedium),
-                            ],
-                          ),
+                            ),
+                          )
+
                         ),
-                      )
+
+                        SizedBox(height: 12),
+
+                        Text(
+                          "No Alarms",
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+
+                        SizedBox(height: 6),
+
+                        Text(
+                          "Create a new alarm",
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
                     : Padding(
                         padding: EdgeInsets.only(
                             left: width / 45, right: width / 45, bottom: 48),

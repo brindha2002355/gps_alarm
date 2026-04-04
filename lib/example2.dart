@@ -318,7 +318,7 @@ class _MyAlarmsPageState extends State<MyAlarmsPage> {
                 GestureDetector(
                   onTap: () {
                     Alarmplayer alarmplayer = Alarmplayer();
-                    alarmplayer.StopAlarm();
+                    alarmplayer.stop();
                   },
                   child: Lottie.asset(
                     'assets/newlocationalarm.json',
