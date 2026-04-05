@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:audioplayers/audioplayers.dart'; // Add this line
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -584,83 +587,122 @@ class _SettingsState extends State<Settings> {
               //     ),
               //   ],
               // ),\
+              // Column(
+              //   children: [
+              //     ...['Vibrate', 'Alarms'].map((option) {
+              //       if (option == 'Vibrate') {
+              //         return CheckboxListTile(
+              //           title: Text(option),
+              //           value: _selectedOptions.contains(_optionMap[option]),
+              //           onChanged: (bool? value) async {
+              //             setState(() {
+              //               if (value!) {
+              //                 _selectedOptions.add(_optionMap[option]!);
+              //               } else {
+              //                 _selectedOptions.remove(_optionMap[option]);
+              //               }
+              //
+              //               // ✅ CORRECT
+              //
+              //             //  _playRingtone(value);
+              //
+              //               print("SAVED RINGTONE: $value");
+              //           //    _saveSettings(selectedRingtone!);
+              //             });
+              //             print(_selectedOptions);
+              //
+              //             await _saveSettings();
+              //           },
+              //         );
+              //       } else if (option == 'Alarms') {
+              //         // return Column(
+              //         //   children: [
+              //         //     CheckboxListTile(
+              //         //       title: Text(option),
+              //         //       value:
+              //         //           _selectedOptions.contains(_optionMap[option]),
+              //         //       onChanged: (bool? value) async {
+              //         //         setState(() {
+              //         //           if (value!) {
+              //         //             _selectedOptions.add(_optionMap[option]!);
+              //         //           } else {
+              //         //             _selectedOptions.remove(_optionMap[option]);
+              //         //           }
+              //         //         //  print(_selectedOptions);
+              //         //          // _saveSettings(selectedRingtone!);
+              //         //         });
+              //         //         print(_selectedOptions);
+              //         //
+              //         //         await _saveSettings();
+              //         //       },
+              //         //
+              //         //     ),
+              //         //     Visibility(
+              //         //       visible:
+              //         //           _selectedOptions.contains(_optionMap[option]),
+              //         //       child: Container(
+              //         //         child: Column(
+              //         //           crossAxisAlignment: CrossAxisAlignment.start,
+              //         //           children: [
+              //         //             SizedBox(
+              //         //               height: MediaQuery.of(context).size.height /
+              //         //                   37.8,
+              //         //             ),
+              //         //             Text(
+              //         //               'Alarm',
+              //         //               style:
+              //         //                   Theme.of(context).textTheme.titleLarge,
+              //         //             ),
+              //         //             _buildRingtoneDropdown(),
+              //         //           ],
+              //         //         ),
+              //         //       ),
+              //         //     ),
+              //         //   ],
+              //         // );
+              //       return   CheckboxListTile(
+              //           title: Text('Alarms'),
+              //           value: true,              // ✅ always checked
+              //           onChanged: null,          // ❌ disabled (cannot uncheck)
+              //           controlAffinity: ListTileControlAffinity.leading,
+              //         );
+              //       } else {
+              //         return Container();
+              //       }
+              //     }).toList(),
+              //   ],
+              // ),
               Column(
                 children: [
-                  ...['Vibrate', 'Alarms'].map((option) {
-                    if (option == 'Vibrate') {
-                      return CheckboxListTile(
-                        title: Text(option),
-                        value: _selectedOptions.contains(_optionMap[option]),
-                        onChanged: (bool? value) async {
-                          setState(() {
-                            if (value!) {
-                              _selectedOptions.add(_optionMap[option]!);
-                            } else {
-                              _selectedOptions.remove(_optionMap[option]);
-                            }
+                  // Vibrate
+                  CheckboxListTile(
+                    title: Text('Vibrate'),
+                    value: _selectedOptions.contains('vibrate'),
+                    onChanged: (bool? value) async {
+                      setState(() {
+                        if (value!) {
+                          _selectedOptions.add('vibrate');
+                        } else {
+                          _selectedOptions.remove('vibrate');
+                        }
+                      });
+                      await _saveSettings();
+                    },
+                  ),
 
-                            // ✅ CORRECT
-
-                          //  _playRingtone(value);
-
-                            print("SAVED RINGTONE: $value");
-                        //    _saveSettings(selectedRingtone!);
-                          });
-                          print(_selectedOptions);
-
-                          await _saveSettings();
-                        },
+                  // Alarms (always ON but looks normal)
+                  CheckboxListTile(
+                    title: Text('Alarms'),
+                    value: true,
+                    onChanged: (bool? value) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Alarms is always enabled and cannot be changed'),
+                          duration: Duration(seconds: 2),
+                        ),
                       );
-                    } else if (option == 'Alarms') {
-                      return Column(
-                        children: [
-                          CheckboxListTile(
-                            title: Text(option),
-                            value:
-                                _selectedOptions.contains(_optionMap[option]),
-                            onChanged: (bool? value) async {
-                              setState(() {
-                                if (value!) {
-                                  _selectedOptions.add(_optionMap[option]!);
-                                } else {
-                                  _selectedOptions.remove(_optionMap[option]);
-                                }
-                              //  print(_selectedOptions);
-                               // _saveSettings(selectedRingtone!);
-                              });
-                              print(_selectedOptions);
-
-                              await _saveSettings();
-                            },
-
-                          ),
-                          Visibility(
-                            visible:
-                                _selectedOptions.contains(_optionMap[option]),
-                            child: Container(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    height: MediaQuery.of(context).size.height /
-                                        37.8,
-                                  ),
-                                  Text(
-                                    'Alarm',
-                                    style:
-                                        Theme.of(context).textTheme.titleLarge,
-                                  ),
-                                  _buildRingtoneDropdown(),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    } else {
-                      return Container();
-                    }
-                  }).toList(),
+                    }, // do nothing
+                  ),
                 ],
               ),
               Divider(),
@@ -686,14 +728,18 @@ class _SettingsState extends State<Settings> {
                         children: [
                           Row(
                             children: [
-                              Text(
+                              AutoSizeText(
+                                maxFontSize: 12,
+                                minFontSize: 10,
+                                maxLines: 1,
                                 'Radius in Meter',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
-                              SizedBox(
-                                width: width / 2.1176470,
-                              ),
-                              Text(
+                            Spacer(),
+                              AutoSizeText(
+                              maxFontSize: 12,
+                                minFontSize: 10,
+                                maxLines: 1,
                                 '${(meterRadius).toStringAsFixed(_imperial ? 2 : 2)}',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),

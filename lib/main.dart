@@ -4181,11 +4181,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sound_mode/utils/constants.dart';
+import 'package:torch_light/torch_light.dart';
 import 'package:untitiled/main.dart';
 
 import 'package:uuid/uuid.dart';
 import 'Apiutils.dart';
-import 'Homescreens/homescreen.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'Homescreens/save_alarm_page.dart';
 import 'Homescreens/settings.dart';
@@ -4207,7 +4208,7 @@ const channelName = 'Alarm Notifications';
 late AudioHandler _audioHandler;
 ap.AudioPlayer? _audioPlayer;
 Timer? _timer;
-
+Timer? flashTimer;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MobileAds.instance.initialize();
@@ -4266,6 +4267,7 @@ Future<void> initializeService() async {
         'Alarm Sound',
         importance: Importance.max,
         playSound: true,
+
       ),
     );
 
@@ -4300,6 +4302,28 @@ Future<void> initializeService() async {
   );
 }
 
+
+void startFlashBlink() {
+  bool isOn = false;
+
+  flashTimer = Timer.periodic(Duration(milliseconds: 500), (timer) async {
+    try {
+      if (isOn) {
+        await TorchLight.disableTorch();
+      } else {
+        await TorchLight.enableTorch();
+      }
+      isOn = !isOn;
+    } catch (e) {
+      print("Flash error: $e");
+    }
+  });
+}
+
+void stopFlashBlink() async {
+  flashTimer?.cancel();
+  await TorchLight.disableTorch();
+}
 class MyStream {
   StreamController<int> _controller = StreamController<int>();
 
@@ -4352,11 +4376,31 @@ void onDidReceiveNotificationResponse(
     NotificationResponse notificationResponse) async {
   final String? payload = notificationResponse.payload;
   if (notificationResponse.id == notificationId) {
+
+    // await Vibration.cancel();      // stop current vibration
+    //
+    // print("Stopped ONLY by user");
+    //
+    // // optional: remove notification
+    // await flutterLocalNotificationsPlugin.cancel(notificationId);
+    // // Alarmplayer alarmplayer = Alarmplayer();
+    // // await alarmplayer.stop();
+    // // debugPrint('notification payload: $payload');
+    // // debugPrint('valid notification');
+    // Stop vibration
     await Vibration.cancel();
-    // Alarmplayer alarmplayer = Alarmplayer();
-    // await alarmplayer.stop();
-    // debugPrint('notification payload: $payload');
-    // debugPrint('valid notification');
+    _timer?.cancel();
+
+    // Stop flash
+    stopFlashBlink();          // ← ADD THIS
+
+    // Stop audio if playing
+    await _audioPlayer?.stop(); // ← ADD THIS
+
+    // Remove notification
+    await flutterLocalNotificationsPlugin.cancel(notificationId);
+
+    print("Alarm fully stopped by user");
   }
 }
 
@@ -4426,26 +4470,9 @@ Future<bool> containsOption(String option) async {
   if (selectedOptions.isEmpty && option == 'alarms') return true;
   return selectedOptions.contains(option);
 }
-Future<void> startVibration() async {
-  if (_timer == null || !_timer!.isActive) {
-    _timer = Timer.periodic(Duration(milliseconds: 500), (Timer timer) {
-      Vibration.vibrate(duration: 500);
-    });
-  }
-  // while (_shouldVibrate) {
-  //     print("vibration is ringing");// Loop with stopping condition
-  //     Vibration.vibrate(pattern: [500, 1000]); // Adjust pattern as needed
-  //     await Future.delayed(Duration(milliseconds: 100)); // Adjust delay as needed
-  //   }
-}
 
-Future<void> stopVibration() async {
-  if (_timer != null) {
-    _timer!.cancel();
-  }
-  // _shouldVibrate = false;
-  // await Vibration.cancel();
-}
+
+
 
 @pragma('vm:entry-point')
 Future<void> onStart(ServiceInstance service) async {
@@ -4608,14 +4635,16 @@ Future<void> _startLocationUpdates(ServiceInstance service) async {
           print("shouldVibrate: $shouldVibrate");
 // Silent notification
           await flutterLocalNotificationsPlugin.show(
+
             notificationId,
             alarm.alarmName,
+
             'Reached destination radius',
             NotificationDetails(
               android: AndroidNotificationDetails(
                 // 🔥 channel based on mode
-               channelName,
-                channelId,
+                channelId,   // ✅ FIRST
+                channelName,
                 icon: 'ic_bg_service_small',
                 priority: Priority.high,
                 importance: Importance.max,
@@ -4637,6 +4666,8 @@ Future<void> _startLocationUpdates(ServiceInstance service) async {
 
                 ongoing: true,
                 autoCancel: false,
+                additionalFlags: Int32List.fromList([4]),
+
 
                 actions: [
                   AndroidNotificationAction('dismiss', 'Dismiss'),
@@ -4649,11 +4680,15 @@ Future<void> _startLocationUpdates(ServiceInstance service) async {
 // Play sound
           // Play sound
 
-
+       startFlashBlink();
 // Vibrate
-          if (shouldVibrate) {
-            Vibration.vibrate(pattern: [500, 1000], repeat: 0);
-          }
+
+           // Vibration.vibrate(pattern: [500, 1000], repeat: 0);
+            if (shouldVibrate) {
+              Vibration.vibrate(pattern: [500, 1000], repeat: 0);
+
+            }
+
 // Play sound manually if user chose "alarms"
 
           service.invoke('alarmPlayed', {"alarmId": alarm.id});
