@@ -1395,7 +1395,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // Share functionality, no navigation
         final RenderBox box = context.findRenderObject() as RenderBox;
         Share.share(
-          'Check out my awesome app! Download it from the app store: https://play.google.com/store/apps/details?id=com.inodesys.gps_alarm&hl=en',
+          'Check out my awesome app! Download it from the app store: https://play.google.com/store/apps/details?id=com.priya.ProxiAlert&hl=en',
           subject: 'Share this amazing app!',
           sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
         );
@@ -2435,8 +2435,8 @@ class _MyHomePageState extends State<MyHomePage> {
       borderRadius: BorderRadius.circular(30.0),
       child: GooglePlaceAutoCompleteTextField(
         textEditingController: controller,
-        googleAPIKey: "AIzaSyA3byIibe-X741Bw5rfEzOHZEKuWdHvCbw",
-
+     //   googleAPIKey: "AIzaSyA3byIibe-X741Bw5rfEzOHZEKuWdHvCbw",
+        googleAPIKey:"AIzaSyC8dhJFT2AiqlHnFpZZM19QQbIQjkHO8e0",
         boxDecoration: BoxDecoration(
           color: Colors.white,
           borderRadius:
